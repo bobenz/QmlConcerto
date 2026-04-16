@@ -115,6 +115,8 @@ signals:
 protected:
     virtual bool _play() = 0;
 
+    void log_signal(const QString &signalName, const QVariant &data = QVariant());
+
 private:
     State     m_state     = Silent;
     Finalized m_finalized = None;
@@ -129,7 +131,7 @@ private:
         return m_title.isEmpty() ? QLatin1String(metaObject()->className()) : m_title;
     }
 
-   void log_state();
+    void log_state();
     Report make_report();
 
 };

@@ -21,7 +21,6 @@ void Phrase::setFinalized(Finalized f)
 
 bool Phrase::play()
 {
-
     if (m_state == Playing) {
         qWarning() << metaObject()->className() << "play() called while already Playing";
         return false;
@@ -105,7 +104,15 @@ void Phrase::log_state()
 
 
     emit report(r);
+}
 
+void Phrase::log_signal(const QString &signalName, const QVariant &data)
+{
+    Report r = make_report();
+    r.category = Report::Category::Debug;
+    r.message = QString("signal: %1").arg(signalName);
+    r.data = data;
+    emit report(r);
 }
 
 Report Phrase::make_report()
