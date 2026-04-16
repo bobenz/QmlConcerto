@@ -1,5 +1,3 @@
-#ifndef ERRORSREGISTRY_H
-#define ERRORSREGISTRY_H
 #pragma once
 #include <QString>
 #include <QMap>
@@ -202,5 +200,4 @@ inline ErrorEntry::ErrorEntry(const QString &name,
 }
 
 
-static ErrorEntry NoError("no_error", "APP", 0, "No error");
-#endif // ERRORSREGISTRY_H
+inline ErrorEntry NoError("no_error", "APP", 0, "No error");

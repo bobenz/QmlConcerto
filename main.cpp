@@ -1,5 +1,25 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
+
+#include "phrase.h"
+#include "melody.h"
+#include "errorsregistry.h"
+
+static void registerQmlTypes(QQmlApplicationEngine &engine)
+{
+    qRegisterMetaType<ErrorEntry>("ErrorEntry");
+    qRegisterMetaType<Report>("Report");
+
+    qmlRegisterUncreatableType<Phrase>("QmlConcerto", 1, 0, "Phrase",
+        "Phrase is abstract — use Melody, Sequence, or Chord");
+    qmlRegisterType<Melody>("QmlConcerto", 1, 0, "Melody");
+
+    engine.rootContext()->setContextProperty("ErrorRegistry",
+                                             &ErrorRegistry::instance());
+    engine.rootContext()->setContextProperty("Errors",
+                                             ErrorRegistry::instance().map());
+}
 
 int main(int argc, char *argv[])
 {
@@ -9,6 +29,9 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     QQmlApplicationEngine engine;
+
+    registerQmlTypes(engine);
+
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(
         &engine,

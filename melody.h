@@ -27,9 +27,8 @@ public:
     QList<Phrase*> phraseList() const;
 
 protected:
-    // We leave _play() pure virtual or empty so derived classes
-    // (Sequence/Chord) can implement their own execution logic.
-    virtual bool _play() override = 0;
+    // emit enter() so QML compositions (Sequence/Chord) can hook onEnter:
+    bool _play() override;
 
     QList<Phrase *> m_phrases;
 

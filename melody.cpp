@@ -14,6 +14,12 @@ void Melody::componentComplete()
     // Logic to run once the QML tree is fully loaded
 }
 
+bool Melody::_play()
+{
+    emit enter();
+    return true;
+}
+
 QQmlListProperty<Phrase> Melody::phrases()
 {
     return QQmlListProperty<Phrase>(this, nullptr,

@@ -1,52 +1,46 @@
+import QtQuick 2.15
+import QmlConcerto 1.0
 
 Melody {
     id: root
 
-    function _play() {
+    property int _resolvedCount: 0
+    property var _watchers: []
+
+    onEnter: {
         if (phrases.length === 0) {
-            state = Concerto.Resolved;
-            finalized = Concerto.Consonant;
-            return;
+            finish()
+            return
+        }
+        _resolvedCount = 0
+        _watchers = []
+        // All phrases start simultaneously when the Chord enters Playing
+        for (var i = 0; i < phrases.length; i++) {
+            phrases[i].after = Qt.binding(function() { return root.state === Phrase.Playing })
+            var fn = _makeWatcher(phrases[i])
+            _watchers.push({ phrase: phrases[i], fn: fn })
+            phrases[i].stateChanged.connect(fn)
         }
     }
 
-    Component.onCompleted: {
-        if (phrases.length === 0) return;
-
-        // 1. The Attack: All phrases start simultaneously when the Chord plays
-        for (let i = 0; i < phrases.length; ++i) {
-            phrases[i].after = Qt.binding(() => state === Concerto.Playing);
+    function _makeWatcher(phrase) {
+        return function() {
+            if (phrase.state !== Phrase.Resolved) return
+            // Disconnect this watcher
+            for (var i = 0; i < _watchers.length; i++) {
+                if (_watchers[i].phrase === phrase) {
+                    phrase.stateChanged.disconnect(_watchers[i].fn)
+                    break
+                }
+            }
+            _resolvedCount++
+            if (_resolvedCount < phrases.length) return
+            // All resolved — find first error if any
+            var err = null
+            for (var j = 0; j < phrases.length; j++) {
+                if (phrases[j].finalized === Phrase.Dissonant) { err = phrases[j].lastError; break }
+            }
+            err !== null ? finish(err) : finish()
         }
-
-        // 2. The Resolution: The Chord is Resolved only when EVERY phrase is Resolved
-        state = Qt.binding(() => {
-            let allResolved = true;
-            for (let i = 0; i < phrases.length; ++i) {
-                if (phrases[i].state !== Concerto.Resolved) {
-                    allResolved = false;
-                    break;
-                }
-            }
-            return allResolved ? Concerto.Resolved : state;
-        });
-
-        // 3. The Finalization: If any phrase is Dissonant, the Chord is Dissonant
-        finalized = Qt.binding(() => {
-            let hasDiscord = false;
-            let allResolved = true;
-
-            for (let i = 0; i < phrases.length; ++i) {
-                if (phrases[i].state === Concerto.Resolved) {
-                    if (phrases[i].finalized === Concerto.Dissonant) {
-                        hasDiscord = true;
-                    }
-                } else {
-                    allResolved = false;
-                }
-            }
-
-            if (!allResolved) return finalized;
-            return hasDiscord ? Concerto.Dissonant : Concerto.Consonant;
-        });
     }
 }

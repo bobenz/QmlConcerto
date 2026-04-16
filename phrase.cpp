@@ -72,6 +72,14 @@ void Phrase::warning(QString msg)
     emit report(r);
 }
 
+void Phrase::error(ErrorEntry entry)
+{
+    Report r = make_report();
+    r.category = Report::Category::Error;
+    r.message = entry.toString();
+    emit report(r);
+}
+
 void Phrase::log_state()
 {
     Report r = make_report();
@@ -82,16 +90,16 @@ void Phrase::log_state()
         case Silent: st << "Silent";break;
         case Playing: st <<"Playing"; break;   // Executing
         case Paused: st << "Paused"; break; // Suspended
-        case Resolved :
-
-            st << "Resolved" ; break;
+        case Resolved:
+            st << "Resolved";
             switch (m_finalized)
             {
-            case Aborted: st << "Aborted"; break;
-            case Consonant: st << "Consonnat"; break;
-            case Dissonant: st << "Dissonsnt"; break;
-            default:break;
+            case Aborted:   st << "Aborted";   break;
+            case Consonant: st << "Consonant"; break;
+            case Dissonant: st << "Dissonant"; break;
+            default: break;
             }
+            break;
         default: break;
         }
 
@@ -107,6 +115,7 @@ Report Phrase::make_report()
     Report r;
     r.timestamp = QDateTime::currentDateTime();
     r.source = QString("%1/%2").arg(m_parentPath).arg(label());
+    return r;
 }
 
 bool Phrase::after() const
