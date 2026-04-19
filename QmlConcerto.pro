@@ -1,30 +1,13 @@
-QT += quick qml
-CONFIG += c++17
+TARGET = MyConcertoApp
+TEMPLATE = app
 
-# You can make your code fail to compile if it uses deprecated APIs.
-# In order to do so, uncomment the following line.
-#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+# Include the module
+include(concerto.pri)
 
-SOURCES += \
-        main.cpp \
-        melody.cpp \
-        phrase.cpp
+# Only keep app-specific sources here
+SOURCES += main.cpp
 
-RESOURCES += qml.qrc \
-    notes.qrc
-
-# Additional import path used to resolve QML modules in Qt Creator's code model
-QML_IMPORT_PATH =
-
-# Additional import path used to resolve QML modules just for Qt Quick Designer
-QML_DESIGNER_IMPORT_PATH =
-
-# Default rules for deployment.
+# Deployment and other app-level configs
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-HEADERS += \
-    errorsregistry.h \
-    melody.h \
-    phrase.h
