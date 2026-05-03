@@ -37,6 +37,9 @@ public:
                const QString &description,
                ErrorEntryNoRegTag);
 
+    // Constructor that obtains data from the registry
+    inline ErrorEntry(int code);
+
     QString name()        const { return m_name; }
     QString source()      const { return m_source; }
     int     code()        const { return m_code; }
@@ -67,26 +70,7 @@ inline bool operator!=(const ErrorEntry &lhs, const ErrorEntry &rhs)
     return !(lhs == rhs);
 }
 
-// ── ErrorRegistry ─────────────────────────────────────────────────────────────
-//
-// Two context properties in main.cpp:
-//
-//   engine.rootContext()->setContextProperty("ErrorRegistry",
-//                                            &ErrorRegistry::instance());
-//   engine.rootContext()->setContextProperty("Errors",
-//                                            ErrorRegistry::instance().map());
-//
-// C++ usage:
-//   ErrorRegistry::instance().create("session_xpr", "APP", -1001, "Session expired");
-//
-// QML usage:
-//   Errors.session_xpr.code
-//   Errors.session_xpr.description
-//   Errors.session_xpr.text
-//   ErrorRegistry.lookup(-1001)          // by code → QVariant<ErrorEntry>
-//   ErrorRegistry.describe(-1001)        // by code → QString
-//   ErrorRegistry.lookupByName("session_xpr")  // by name → QVariant<ErrorEntry>
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 class ErrorRegistry : public QObject
 {
@@ -199,5 +183,24 @@ inline ErrorEntry::ErrorEntry(const QString &name,
     // intentionally does NOT call registerEntry
 }
 
-
 inline ErrorEntry NoError("no_error", "APP", 0, "No error");
+inline ErrorEntry UnknownError("unknown_error", "SYS", -1000000, "Unknown error code");
+
+inline ErrorEntry::ErrorEntry(int code)
+{
+    // Access the registry's internal map
+    // We use ErrorRegistry::instance() to find the existing definition
+    ErrorRegistry& reg = ErrorRegistry::instance();
+
+    if (reg.contains(code)) {
+        // Use the registry's lookup to populate this instance
+        // We cast the QVariant back to ErrorEntry
+        *this = reg.lookup(code).value<ErrorEntry>();
+    } else {
+        // Fallback to the UnknownError definition
+        *this = UnknownError;
+        // Optionally override the code to reflect the requested but missing code
+        m_code = code;
+    }
+}
+

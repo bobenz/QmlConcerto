@@ -12,7 +12,7 @@ class Melody : public Phrase, public QQmlParserStatus
     Q_INTERFACES(QQmlParserStatus)
 
     // The generic list of components
-    Q_PROPERTY(QQmlListProperty<Phrase> phrases READ phrases)
+    Q_PROPERTY(QQmlListProperty<Phrase> phrases READ phrases NOTIFY phrasesChanged)
     Q_CLASSINFO("DefaultProperty", "phrases")
 
 public:
@@ -26,10 +26,14 @@ public:
     QQmlListProperty<Phrase> phrases();
     QList<Phrase*> phraseList() const;
 
+
+signals:
+    void phrasesChanged();
+
 protected:
     // emit enter() so QML compositions (Sequence/Chord) can hook onEnter:
     bool _play() override;
-
+    void _reset() override;
     QList<Phrase *> m_phrases;
 
 private:

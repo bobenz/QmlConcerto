@@ -3,13 +3,14 @@ QT += quick qml
 CONFIG += c++17
 
 # Define the include path so the parent project can find headers easily
-INCLUDEPATH += $$PWD
+INCLUDEPATH += \\\"$$PWD\\\"
 
 # Header files
 HEADERS += \
     $$PWD/errorsregistry.h \
     $$PWD/melody.h \
-    $$PWD/phrase.h
+    $$PWD/phrase.h \
+    $$PWD/concerto_registration.h
 
 # Source files
 SOURCES += \
@@ -18,5 +19,4 @@ SOURCES += \
 
 # Resources
 RESOURCES += \
-    $$PWD/qml.qrc \
     $$PWD/notes.qrc

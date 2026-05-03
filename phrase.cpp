@@ -3,6 +3,8 @@
 
 Phrase::Phrase(QObject *parent) : QObject(parent) {}
 
+#define REPORT(r)    qDebug() << r; emit report(r)
+
 void Phrase::setState(State s)
 {
     if (m_state == s) return;
@@ -15,26 +17,51 @@ void Phrase::setFinalized(Finalized f)
 {
     if (m_finalized == f) return;
     m_finalized = f;
-    emit exit();
+    if(m_finalized != Finalized::None )
+    {
+        emit exit();
+    }
     emit finalizedChanged();
 }
 
 bool Phrase::play()
 {
+
     if (m_state == Playing) {
         qWarning() << metaObject()->className() << "play() called while already Playing";
         return false;
     }
+    if(m_finishOn)
+    {
+        setFinalized(Finalized::Consonant);
+        return false;
+    }
+    if(m_abortOn)
+    {
+        setFinalized(Finalized::Aborted);
+        return false;
+    }
+
     setFinalized(None);
     setState(Playing);
 
     emit enter();
     return _play();
 }
+void Phrase::accompany()
+{
+    if (m_state != Playing) {
+        qWarning() << metaObject()->className() << "accompany() called outside Playing";
+        return;
+    }
+    setState(Accompanying);
+}
 
 void Phrase::finish(const ErrorEntry &error)
 {
-    if (m_state != Playing) return;
+    if (m_state != Playing && m_state != Accompanying) return;
+    setLastError(error);
+
     if(error == NoError)
     {
         setFinalized(Consonant);
@@ -42,41 +69,62 @@ void Phrase::finish(const ErrorEntry &error)
     }
     else
     {
+
        setFinalized(Dissonant);
     }
-    setLastError(error);
+
     setState(Resolved);
 }
 
 void Phrase::abort()
 {
-    if (m_state != Playing) return;
+    if (m_state != Playing && m_state != Accompanying) return;
     setFinalized(Aborted);
     setState(Resolved);
 }
 
-void Phrase::info(QString msg)
+void Phrase::reset()
+{
+    _reset();
+}
+
+void Phrase::info(QString msg) const
 {
     Report r = make_report();
     r.category= Report::Category::Info;
     r.message = msg;
-    emit report(r);
+    REPORT(r);
 }
 
-void Phrase::warning(QString msg)
+void Phrase::warning(QString msg) const
 {
     Report r = make_report();
     r.category= Report::Category::Warning;
     r.message = msg;
-    emit report(r);
+    REPORT(r);
 }
 
-void Phrase::error(ErrorEntry entry)
+void Phrase::error(ErrorEntry entry) const
 {
     Report r = make_report();
     r.category = Report::Category::Error;
-    r.message = entry.toString();
-    emit report(r);
+    r.message = entry.description();
+    r.data = QVariant::fromValue(entry);
+    REPORT(r);
+}
+
+bool Phrase::_play()
+{
+    finish();
+    return true;
+}
+
+void Phrase::_reset()
+{    
+    setFinalized(Finalized::None);
+    setLastError(NoError);
+    setState(Phrase::Silent);
+
 }
 
 void Phrase::log_state()
@@ -102,8 +150,9 @@ void Phrase::log_state()
         default: break;
         }
 
-
-    emit report(r);
+        r.message = st.join(" ");
+        r.data = QVariant::fromValue(m_state);
+        REPORT(r);
 }
 
 void Phrase::log_signal(const QString &signalName, const QVariant &data)
@@ -112,10 +161,10 @@ void Phrase::log_signal(const QString &signalName, const QVariant &data)
     r.category = Report::Category::Debug;
     r.message = QString("signal: %1").arg(signalName);
     r.data = data;
-    emit report(r);
+    REPORT(r);
 }
 
-Report Phrase::make_report()
+Report Phrase::make_report() const
 {
 
 
@@ -135,7 +184,10 @@ void Phrase::setAfter(bool newAfter)
     if (m_after == newAfter)
         return;
     m_after = newAfter;
-    if(m_after) play();
+    if(m_after)
+    {
+        play();
+    }
     emit afterChanged();
 }
 
@@ -146,7 +198,13 @@ ErrorEntry Phrase::lastError() const
 
 void Phrase::setLastError(const ErrorEntry &newLastError)
 {
+    if (m_lastError == newLastError) return;
     m_lastError = newLastError;
+    error(m_lastError);
+    if(m_lastError  != NoError && m_finishOnError)
+    {
+        finish(m_lastError);
+    }
     emit lastErrorChanged();
 }
 
@@ -174,3 +232,50 @@ void Phrase::setLyric(const QString &newLyric)
     emit lyricChanged();
 }
 
+
+bool Phrase::abortOn() const
+{
+    return m_abortOn;
+}
+
+void Phrase::setAbortOn(bool newAbortOn)
+{
+    if (m_abortOn == newAbortOn)
+        return;
+    m_abortOn = newAbortOn;
+    if(m_abortOn)
+    {
+        abort();
+    }
+    emit abortOnChanged();
+}
+
+bool Phrase::finishOn() const
+{
+    return m_finishOn;
+}
+
+void Phrase::setFinishOn(bool newFinishOn)
+{
+    if (m_finishOn == newFinishOn)
+        return;
+    m_finishOn = newFinishOn;
+    if(m_finishOn)
+    {
+        finish();
+    }
+    emit finishOnChanged();
+}
+
+bool Phrase::finishOnError() const
+{
+    return m_finishOnError;
+}
+
+void Phrase::setFinishOnError(bool newFinishOnError)
+{
+    if (m_finishOnError == newFinishOnError)
+        return;
+    m_finishOnError = newFinishOnError;
+    emit finishOnErrorChanged();
+}

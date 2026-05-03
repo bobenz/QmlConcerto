@@ -30,7 +30,18 @@ public:
     QDateTime timestamp;
 };
 
-
+inline QDebug operator<<(QDebug debug, const Report &report)
+{
+    QDebugStateSaver saver(debug);
+    debug.nospace() << "Report("
+                    << "Source: "    << report.source
+                    << ", Category: " << report.category
+                    << ", Message: "  << report.message
+                    << ", Data: "     << report.data
+                    << ", Time: "     << report.timestamp.toString(Qt::ISODateWithMs)
+                    << ")";
+    return debug;
+}
 
 class Phrase : public QObject
 {
@@ -42,11 +53,15 @@ class Phrase : public QObject
     Q_PROPERTY(ErrorEntry lastError READ lastError WRITE setLastError NOTIFY lastErrorChanged FINAL)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged FINAL)
     Q_PROPERTY(QString lyric READ lyric WRITE setLyric NOTIFY lyricChanged FINAL)
+    Q_PROPERTY(bool abortOn READ abortOn WRITE setAbortOn NOTIFY abortOnChanged FINAL)
+    Q_PROPERTY(bool finishOn READ finishOn WRITE setFinishOn NOTIFY finishOnChanged FINAL)
+    Q_PROPERTY(bool finishOnError READ finishOnError  WRITE setFinishOnError NOTIFY finishOnErrorChanged FINAL)
 
 public:
     enum State {
         Silent,    // Initial / idle
         Playing,   // Executing
+        Accompanying, //Playing on background
         Paused,    // Suspended
         Resolved   // Terminal — check finalized for outcome
     };
@@ -83,17 +98,28 @@ public:
 
     void setParentPath(QString p) { m_parentPath = p;}
 
+    bool abortOn() const;
+    void setAbortOn(bool newAbortOn);
+
+    bool finishOn() const;
+    void setFinishOn(bool newFinishOn);
+
+    bool finishOnError() const;
+    void setFinishOnError(bool newFinishOnError);
+
 public slots:
     bool play();
     void finish(const ErrorEntry &newLastError =NoError);
     void abort();
+    void reset();
+    void accompany();
 
 
     ////logging
     ///
-    void info(QString msg);
-    void warning(QString msg);
-    void error(ErrorEntry);
+    void info(QString msg) const;
+    void warning(QString msg) const;
+    void error(ErrorEntry) const;
 
 
 signals:
@@ -110,13 +136,20 @@ signals:
     void titleChanged();
 
     void lyricChanged();
-    void report(Report);
+    void report(Report) const;
+
+    void abortOnChanged();
+
+    void finishOnChanged();
+
+    void finishOnErrorChanged();
 
 protected:
-    virtual bool _play() = 0;
+    virtual bool _play();
+    virtual void _reset();
 
     void log_signal(const QString &signalName, const QVariant &data = QVariant());
-    Report make_report();
+    Report make_report() const;
 
 private:
     void log_state();
@@ -133,6 +166,9 @@ private:
         return m_title.isEmpty() ? QLatin1String(metaObject()->className()) : m_title;
     }
 
+    bool m_abortOn = false;
+    bool m_finishOn = false;
+    bool m_finishOnError = true;
 };
 
 #endif // PHRASE_H

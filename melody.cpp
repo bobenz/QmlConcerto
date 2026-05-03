@@ -20,6 +20,16 @@ bool Melody::_play()
     return true;
 }
 
+void Melody::_reset()
+{
+    Phrase::reset();
+    for(Phrase* p: m_phrases)
+    {
+        p->reset();
+    }
+
+}
+
 QQmlListProperty<Phrase> Melody::phrases()
 {
     return QQmlListProperty<Phrase>(this, nullptr,
@@ -64,3 +74,5 @@ void Melody::clear(QQmlListProperty<Phrase> *list)
         self->m_phrases.clear();
     }
 }
+
+
