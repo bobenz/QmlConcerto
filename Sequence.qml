@@ -5,10 +5,8 @@ Melody {
     id: root
 
 
-    finishOn: phrases.length > 0 && (
-            phrases[phrases.length - 1].state === Phrase.Resolved ||
-            (root.finishOnError && root.lastError.code !== Errors.no_error.code)
-        )
+
+
 
     Component.onCompleted: {
         if (phrases.length === 0) return;
@@ -25,6 +23,12 @@ Melody {
                 let previousPhrase = phrases[i - 1];
                 currentPhrase.after = Qt.binding(() => previousPhrase.state === Phrase.Resolved);
             }
+
+            var last = phrases[phrases.length - 1]
+            root.finishOn = Qt.binding(function() {
+                return last.state === Phrase.Resolved ||
+                       (root.finishOnError && last.finalized === Phrase.Dissonant)
+            })
 
             // Connect signal (note the plural 'phrases')
             currentPhrase.onFinalizedChanged.connect(() => {

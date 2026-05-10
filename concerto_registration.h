@@ -6,7 +6,9 @@
 #include <QQmlContext>
 
 #include "phrase.h"
+#include "pause.h"
 #include "melody.h"
+#include "quote.h"
 #include "errorsregistry.h"
 
 static const char* uri   = "Concerto";
@@ -19,10 +21,10 @@ public:
     ConcertoRegistration(QQmlEngine* engine)
     {
         Q_ASSERT(engine);
-        qmlRegisterType<Phrase>        (uri, major, minor, "Note");
+        qmlRegisterType<Phrase>        (uri, major, minor, "Phrase");
         qmlRegisterType<Melody>        (uri, major, minor, "Melody");
-
-
+        qmlRegisterType<Pause>        (uri, major, minor, "Pause");
+        qmlRegisterType<Quote>        (uri, major, minor, "Quote");
         qRegisterMetaType<ErrorEntry>("ErrorEntry");
 
         // 2. Expose the Registry itself to call functions like lookup() or declare()

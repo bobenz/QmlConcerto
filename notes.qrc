@@ -1,6 +1,9 @@
 <RCC>
-    <qresource prefix="/">
+    <qresource prefix="/concerto">
         <file>Sequence.qml</file>
         <file>Chord.qml</file>
+        <file>Cadenza.qml</file>
+        <file>Reprisa.qml</file>
+        <file>Sonata.qml</file>
     </qresource>
 </RCC>

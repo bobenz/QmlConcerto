@@ -22,7 +22,7 @@ bool Melody::_play()
 
 void Melody::_reset()
 {
-    Phrase::reset();
+    Phrase::_reset();
     for(Phrase* p: m_phrases)
     {
         p->reset();
