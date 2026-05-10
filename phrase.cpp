@@ -79,6 +79,8 @@ void Phrase::finish(const ErrorEntry &error)
 void Phrase::abort()
 {
     if (m_state != Playing && m_state != Accompanying) return;
+    _abort();
+    emit cancel();
     setFinalized(Aborted);
     setState(Resolved);
 }
@@ -86,6 +88,10 @@ void Phrase::abort()
 void Phrase::reset()
 {
     _reset();
+    emit cleanup();
+    setFinalized(Finalized::None);
+    setLastError(NoError);
+    setState(Phrase::Silent);
 }
 
 void Phrase::info(QString msg) const
@@ -121,9 +127,12 @@ bool Phrase::_play()
 
 void Phrase::_reset()
 {    
-    setFinalized(Finalized::None);
-    setLastError(NoError);
-    setState(Phrase::Silent);
+
+
+}
+void Phrase::_abort()
+{
+
 
 }
 

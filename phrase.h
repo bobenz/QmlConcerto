@@ -128,6 +128,8 @@ signals:
 
     void enter();
     void exit();
+    void cleanup(); //called after _reset;
+    void cancel(); //called after _abort;
 
     void afterChanged();
 
@@ -147,6 +149,7 @@ signals:
 protected:
     virtual bool _play();
     virtual void _reset();
+    virtual void _abort();
 
     void log_signal(const QString &signalName, const QVariant &data = QVariant());
     Report make_report() const;
