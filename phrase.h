@@ -162,7 +162,7 @@ protected:
     virtual bool _play();
     virtual void _reset();
     virtual void _abort();
-
+    virtual void _finish();
     void log_signal(const QString &signalName, const QVariant &data = QVariant());
     Report make_report() const;
 

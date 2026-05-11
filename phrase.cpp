@@ -65,6 +65,7 @@ void Phrase::accompany()
 void Phrase::finish(const ErrorEntry &error)
 {
     if (m_state != Playing && m_state != Accompanying) return;
+    _finish();
     setLastError(error);
 
     if(error == NoError)
@@ -83,7 +84,7 @@ void Phrase::finish(const ErrorEntry &error)
 
 void Phrase::abort()
 {
-    if (m_state != Playing && m_state != Accompanying) return;
+    if (!playing()) return;
     _abort();
     emit cancel();
     setFinalized(Aborted);
@@ -140,6 +141,13 @@ void Phrase::_abort()
 
 
 }
+
+void Phrase::_finish()
+{
+
+
+}
+
 
 void Phrase::log_state()
 {
