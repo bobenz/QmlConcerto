@@ -9,6 +9,7 @@ INCLUDEPATH += $$PWD
 HEADERS += \
     $$PWD/errorsregistry.h \
     $$PWD/melody.h \
+    $$PWD/partitura.h \
     $$PWD/pause.h \
     $$PWD/phrase.h \
     $$PWD/quote.h \
@@ -17,6 +18,7 @@ HEADERS += \
 # Source files
 SOURCES += \
     $$PWD/melody.cpp \
+    $$PWD/partitura.cpp \
     $$PWD/pause.cpp \
     $$PWD/quote.cpp \
     $$PWD/phrase.cpp

@@ -56,6 +56,9 @@ class Phrase : public QObject
     Q_PROPERTY(bool abortOn READ abortOn WRITE setAbortOn NOTIFY abortOnChanged FINAL)
     Q_PROPERTY(bool finishOn READ finishOn WRITE setFinishOn NOTIFY finishOnChanged FINAL)
     Q_PROPERTY(bool finishOnError READ finishOnError  WRITE setFinishOnError NOTIFY finishOnErrorChanged FINAL)
+    Q_PROPERTY(bool playing READ playing  NOTIFY playingChanged FINAL)
+    Q_PROPERTY(QString  tag READ tag WRITE setTag NOTIFY tagChanged FINAL)
+
 
 public:
     enum State {
@@ -107,6 +110,11 @@ public:
     bool finishOnError() const;
     void setFinishOnError(bool newFinishOnError);
 
+    bool playing() const;
+
+    QString tag() const;
+    void setTag(const QString &newTag);
+
 public slots:
     bool play();
     void finish(const ErrorEntry &newLastError =NoError);
@@ -146,6 +154,10 @@ signals:
 
     void finishOnErrorChanged();
 
+    void playingChanged();
+
+    void tagChanged();
+
 protected:
     virtual bool _play();
     virtual void _reset();
@@ -172,6 +184,8 @@ private:
     bool m_abortOn = false;
     bool m_finishOn = false;
     bool m_finishOnError = true;
+
+    QString m_tag;
 };
 
 #endif // PHRASE_H

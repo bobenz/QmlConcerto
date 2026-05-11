@@ -9,6 +9,7 @@
 #include "pause.h"
 #include "melody.h"
 #include "quote.h"
+#include "partitura.h"
 #include "errorsregistry.h"
 
 static const char* uri   = "Concerto";
@@ -29,7 +30,7 @@ public:
 
         // 2. Expose the Registry itself to call functions like lookup() or declare()
         engine->rootContext()->setContextProperty("ErrorRegistry", &ErrorRegistry::instance());
-
+        qmlRegisterSingletonType<Partitura>("Concerto.Core", 1, 0, "Partitura", partitura_provider);
         // 3. Expose the PropertyMap as "Errors" for easy dot-notation access
         // This allows you to write: Errors.shutter_stuck.description
         engine->rootContext()->setContextProperty("Errors", ErrorRegistry::instance().map());

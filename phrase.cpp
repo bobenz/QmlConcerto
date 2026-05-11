@@ -1,6 +1,6 @@
 #include "phrase.h"
 #include <QDebug>
-
+#include "partitura.h"
 Phrase::Phrase(QObject *parent) : QObject(parent) {}
 
 #define REPORT(r)    qDebug() << r; emit report(r)
@@ -8,8 +8,13 @@ Phrase::Phrase(QObject *parent) : QObject(parent) {}
 void Phrase::setState(State s)
 {
     if (m_state == s) return;
+    bool _playing = playing();
     m_state = s;
     log_state();
+    if(playing() != _playing)
+    {
+        emit playingChanged();
+    }
     emit stateChanged();
 }
 
@@ -287,4 +292,31 @@ void Phrase::setFinishOnError(bool newFinishOnError)
         return;
     m_finishOnError = newFinishOnError;
     emit finishOnErrorChanged();
+}
+
+bool Phrase::playing() const
+{
+    return m_state == Phrase::Playing ||m_state == Phrase::Accompanying;
+}
+
+QString Phrase::tag() const
+{
+    return m_tag;
+}
+
+void Phrase::setTag(const QString &newTag)
+{
+    if (m_tag == newTag)
+        return;
+    if(!m_tag.isEmpty())
+    {
+        Partitura::instance()->deregisterPhrase(m_tag);
+    }
+    m_tag = newTag;
+    if(!newTag.isEmpty())
+    {
+        Partitura::instance()->registerPhrase(m_tag, this);
+    }
+
+    emit tagChanged();
 }
