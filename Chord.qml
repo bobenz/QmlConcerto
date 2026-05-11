@@ -3,7 +3,13 @@ import Concerto 1.0
 
 Melody {
     id: root
-
+    // Finish when every phrase has resolved
+    finishOn:{
+        for (let i = 0; i < phrases.length; i++) {
+            if (phrases[i].state !== Phrase.Resolved) return false;
+        }
+        return true;
+    }
     Component.onCompleted: {
         if (phrases.length === 0) return;
 
@@ -27,12 +33,12 @@ Melody {
             });
         }
 
-        // Finish when every phrase has resolved
-        root.finishOn = Qt.binding(function() {
-            for (let i = 0; i < phrases.length; i++) {
-                if (phrases[i].state !== Phrase.Resolved) return false;
-            }
-            return true;
-        });
+        // // Finish when every phrase has resolved
+        // root.finishOn = Qt.binding(function() {
+        //     for (let i = 0; i < phrases.length; i++) {
+        //         if (phrases[i].state !== Phrase.Resolved) return false;
+        //     }
+        //     return true;
+        // });
     }
 }
