@@ -59,14 +59,13 @@ class Phrase : public QObject
     Q_PROPERTY(bool playing READ playing  NOTIFY playingChanged FINAL)
     Q_PROPERTY(QString  tag READ tag WRITE setTag NOTIFY tagChanged FINAL)
 
-
 public:
     enum State {
-        Silent,    // Initial / idle
-        Playing,   // Executing
-        Accompanying, //Playing on background
-        Paused,    // Suspended
-        Resolved   // Terminal — check finalized for outcome
+        Silent,       // Initial / idle
+        Playing,      // Executing
+        Accompanying, // Playing in background
+        Paused,       // Suspended
+        Resolved      // Terminal — check finalized for outcome
     };
     Q_ENUM(State)
 
@@ -99,7 +98,7 @@ public:
     QString lyric() const;
     void setLyric(const QString &newLyric);
 
-    void setParentPath(QString p) { m_parentPath = p;}
+    void setParentPath(QString p) { m_parentPath = p; }
 
     bool abortOn() const;
     void setAbortOn(bool newAbortOn);
@@ -117,18 +116,15 @@ public:
 
 public slots:
     bool play();
-    void finish(const ErrorEntry &newLastError =NoError);
+    void finish(const ErrorEntry &error = NoError);
     void abort();
     void reset();
     void accompany();
 
-
-    ////logging
-    ///
+    // logging
     void info(QString msg) const;
     void warning(QString msg) const;
     void error(ErrorEntry) const;
-
 
 signals:
     void stateChanged();
@@ -136,53 +132,94 @@ signals:
 
     void enter();
     void exit();
-    void cleanup(); //called after _reset;
-    void cancel(); //called after _abort;
+    void cleanup(); // emitted by _reset_complete()
+    void cancel();  // emitted by _abort_complete()
 
     void afterChanged();
-
     void lastErrorChanged();
-
     void titleChanged();
-
     void lyricChanged();
     void report(Report) const;
-
     void abortOnChanged();
-
     void finishOnChanged();
-
     void finishOnErrorChanged();
-
     void playingChanged();
-
     void tagChanged();
 
 protected:
+    // -----------------------------------------------------------------------
+    // Virtual hooks — async-capable.
+    //
+    // Each _*() hook returns bool:
+    //   true  — operation completed synchronously; base calls _*_complete()
+    //           immediately on return.
+    //   false — operation is async; subclass MUST call _*_complete() (and for
+    //           finish, _finish_complete(error)) when the async work is done.
+    //           Base does NOT call _*_complete() and does NOT transition state.
+    //
+    // Default implementations return true (synchronous no-op), preserving
+    // backward-compatible behaviour for subclasses that do not override.
+    // -----------------------------------------------------------------------
+
+    // Called by play(). true/false contract same as before — false means
+    // the subclass drives completion via finish() / accompany().
+    // (No _play_complete(): completion is driven by finish()/accompany().)
     virtual bool _play();
-    virtual void _reset();
-    virtual void _abort();
-    virtual void _finish();
+
+    // Called by abort(). Return false to defer; call _abort_complete() later.
+    virtual bool _abort();
+
+    // Called by finish(). Return false to defer; call _finish_complete() later.
+    // The pending error is stored in m_pendingFinishError and forwarded
+    // automatically when _finish_complete() is called with no argument.
+    virtual bool _finish();
+
+    // Called by reset(). Return false to defer; call _reset_complete() later.
+    virtual bool _reset();
+
+    // -----------------------------------------------------------------------
+    // Completion methods — call from subclass when async work is done.
+    // Safe to call from any context (connected slot, queued callback, etc.).
+    // Guarded: logs a warning and does nothing if called in the wrong state.
+    // -----------------------------------------------------------------------
+
+    // Completes an abort: emits cancel(), sets Resolved/Aborted.
+    void _abort_complete();
+
+    // Completes a finish: sets lastError, sets Resolved/Consonant or Dissonant.
+    // Call with an explicit error to override, or with no argument to use the
+    // error that was passed to finish() (stored in m_pendingFinishError).
+    void _finish_complete();
+    void _finish_complete(const ErrorEntry &error);
+
+    // Completes a reset: emits cleanup(), clears lastError, sets Silent.
+    void _reset_complete();
+
+    // -----------------------------------------------------------------------
     void log_signal(const QString &signalName, const QVariant &data = QVariant());
     Report make_report() const;
 
 private:
     void log_state();
+
     State     m_state     = Silent;
     Finalized m_finalized = None;
-    bool m_after = false;
+    bool      m_after     = false;
+
     ErrorEntry m_lastError;
+    ErrorEntry m_pendingFinishError; // stored by finish(), consumed by _finish_complete()
+
     QString m_title;
     QString m_lyric;
     QString m_parentPath = "";
-    // phrase.cpp — private helper, not exposed in header
+
     inline QString label() const
     {
         return m_title.isEmpty() ? QLatin1String(metaObject()->className()) : m_title;
     }
 
-    bool m_abortOn = false;
-    bool m_finishOn = false;
+    bool m_abortOn       = false;
+    bool m_finishOn      = false;
     bool m_finishOnError = true;
 
     QString m_tag;
