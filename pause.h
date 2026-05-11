@@ -28,8 +28,7 @@
 //     C++ code is required for the condition-based path.
 //   • Setting timeout: 0 (default) disables the timer — the phrase waits
 //     indefinitely until finishOn fires or abort() is called externally.
-//   • The timer is single-shot and is stopped/destroyed on resolution to
-//     prevent stale callbacks.
+//   • The timer is stopped in _abort() and _reset() to prevent stale callbacks.
 // ---------------------------------------------------------------------------
 
 class Pause : public Phrase
@@ -50,7 +49,9 @@ signals:
     void timeoutChanged();
 
 protected:
-    bool _play() override;
+    bool _play()  override;
+    bool _abort() override;
+    bool _reset() override;
 
 private slots:
     void onTimeout();

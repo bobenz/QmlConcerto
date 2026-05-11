@@ -26,22 +26,21 @@ public:
     QQmlListProperty<Phrase> phrases();
     QList<Phrase*> phraseList() const;
 
-
 signals:
     void phrasesChanged();
 
 protected:
-    // emit enter() so QML compositions (Sequence/Chord) can hook onEnter:
-    bool _play() override;
-    void _reset() override;
+    bool _play()  override;
+    bool _reset() override;
+
     QList<Phrase *> m_phrases;
 
 private:
     // QQmlListProperty callbacks
-    static void append(QQmlListProperty<Phrase> *list, Phrase *phrase);
-    static int  count (QQmlListProperty<Phrase> *list);
-    static Phrase* at (QQmlListProperty<Phrase> *list, int index);
-    static void clear (QQmlListProperty<Phrase> *list);
+    static void    append(QQmlListProperty<Phrase> *list, Phrase *phrase);
+    static int     count (QQmlListProperty<Phrase> *list);
+    static Phrase* at    (QQmlListProperty<Phrase> *list, int index);
+    static void    clear (QQmlListProperty<Phrase> *list);
 };
 
 #endif // MELODY_H

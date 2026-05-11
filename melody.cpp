@@ -16,18 +16,16 @@ void Melody::componentComplete()
 
 bool Melody::_play()
 {
-    emit enter();
+    // Note: Phrase::play() already emits enter() before calling _play().
+    // Do NOT emit enter() here — it would fire twice.
     return true;
 }
 
-void Melody::_reset()
+bool Melody::_reset()
 {
-    Phrase::_reset();
-    for(Phrase* p: m_phrases)
-    {
+    for (Phrase *p : m_phrases)
         p->reset();
-    }
-
+    return true;
 }
 
 QQmlListProperty<Phrase> Melody::phrases()
@@ -70,9 +68,6 @@ Phrase* Melody::at(QQmlListProperty<Phrase> *list, int index)
 void Melody::clear(QQmlListProperty<Phrase> *list)
 {
     auto *self = qobject_cast<Melody *>(list->object);
-    if (self) {
+    if (self)
         self->m_phrases.clear();
-    }
 }
-
-

@@ -63,12 +63,8 @@ signals:
 
 protected:
     bool _play()  override;
-    void _reset() override;
-
-public slots:
-    // Shadow Phrase::abort() so we can forward to source.
-    // (Phrase::abort() is a slot, not virtual — we re-declare and call through.)
-    void abort();
+    bool _abort() override;
+    bool _reset() override;
 
 private slots:
     void onSourceStateChanged();
@@ -80,10 +76,9 @@ private:
     void unwireSource(Phrase *src);
 
     Phrase  *m_source     = nullptr;
-    // Connections we hold to the current source (cleared on source swap)
     QMetaObject::Connection m_connState;
     QMetaObject::Connection m_connReport;
-     QMetaObject::Connection m_connError;
+    QMetaObject::Connection m_connError;
 };
 
 #endif // QUOTE_H

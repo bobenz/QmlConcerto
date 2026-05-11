@@ -8,7 +8,7 @@
 Quote::Quote(QObject *parent)
     : Phrase(parent)
 {
-    connect(this, &Quote::stateChanged , this , &Quote::onMyStateChanged);
+    connect(this, &Quote::stateChanged, this, &Quote::onMyStateChanged);
 }
 
 Quote::~Quote()
@@ -53,10 +53,8 @@ void Quote::wireSource(Phrase *src)
     if (!src)
         return;
 
-    // Mirror state changes (resolves Quote when source resolves).
     m_connState = connect(src, &Phrase::stateChanged,
                           this, &Quote::onSourceStateChanged);
-
 
     m_connError = connect(src, &Phrase::lastErrorChanged,
                           this, &Quote::onSourceLastErrorChanged);
@@ -78,11 +76,11 @@ void Quote::unwireSource(Phrase *src)
 
     m_connState  = {};
     m_connReport = {};
-    m_connError = {};
+    m_connError  = {};
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Lifecycle overrides
+// Phrase virtual hooks
 // ──────────────────────────────────────────────────────────────────────────────
 
 bool Quote::_play()
@@ -90,50 +88,38 @@ bool Quote::_play()
     if (!m_source) {
         // No source — resolve immediately as Dissonant.
         warning("Quote has no source — resolving Dissonant");
-        // Build a transient error entry for the null-source condition.
-        // (If the project has a static error registry entry for this, use that instead.)
         ErrorEntry nullErr;
-        // ErrorEntry is a value type; default-construct gives NoError semantics,
-        // so we call finish() with an explicitly constructed entry if possible,
-        // or simply call finish() without arguments and trust the caller to observe
-        // the warning above.  Either way the phrase does not stall.
         finish(nullErr);
         return false;
     }
-
-    // // Mirror the source's current state in case it already started
-    // // (edge case: source was pre-played before being assigned).
-    // if (m_source->state() == Phrase::Resolved) {
-    //     onSourceStateChanged();
-    //     return true;
-    // }
 
     setState(m_source->state());
     m_source->play();
     return true;
 }
 
-void Quote::_reset()
+// _abort(): forward to source if it is running; otherwise sync teardown.
+// Phrase::abort() calls _abort(); if it returns true, transitions immediately.
+// Source mirroring via onSourceStateChanged() will also fire — that is fine
+// since _abort_complete() guards against double-resolution.
+bool Quote::_abort()
 {
-    // Reset self first (sets state = Silent, finalized = None).
-    Phrase::_reset();
-
-    // Then reset source so it is ready for the next play().
-    if (m_source)
-        m_source->reset();
-}
-
-void Quote::abort()
-{
-    // Forward abort to source; our onSourceStateChanged() will mirror the
-    // Resolved/Aborted outcome back onto Quote.
     if (m_source && (m_source->state() == Phrase::Playing ||
                      m_source->state() == Phrase::Accompanying)) {
         m_source->abort();
-    } else {
-        // Source not running — abort self directly (standard Phrase behaviour).
-        Phrase::abort();
+        // Source will resolve; onSourceStateChanged mirrors the Aborted outcome
+        // back via Phrase::abort() → _abort_complete(). Return true here so
+        // Phrase::abort() also transitions Quote immediately — both Quote and
+        // source end up Resolved/Aborted in the same call stack.
     }
+    return true;
+}
+
+bool Quote::_reset()
+{
+    if (m_source)
+        m_source->reset();
+    return true;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -147,51 +133,17 @@ void Quote::onSourceStateChanged()
 
     qDebug() << "SOURCE STATE " << m_source->state();
     setState(m_source->state());
-
-    // We only care about mirroring once Quote itself is active.
-    // if (state() != Playing && state() != Accompanying)
-    //     return;
-
-    // switch (m_source->state()) {
-    // case Phrase::Accompanying:
-    //     // Source entered background mode — mirror it.
-    //     accompany();
-    //     break;
-
-    // case Phrase::Resolved:
-    //     // Mirror the finalization outcome.
-    //     switch (m_source->finalized()) {
-    //     case Phrase::Consonant:
-    //         finish();                           // resolves Consonant / NoError
-    //         break;
-    //     case Phrase::Dissonant:
-    //         finish(m_source->lastError());      // resolves Dissonant + error
-    //         break;
-    //     case Phrase::Aborted:
-    //         Phrase::abort();                    // resolves Aborted (bypass forward)
-    //         break;
-    //     default:
-    //         break;
-    //     }
-    //     break;
-
-    // default:
-    //     // Playing / Silent / Paused — no action needed on Quote's side.
-    //     break;
-    // }
 }
 
 void Quote::onMyStateChanged()
 {
-    if(!m_source) return;
-    if(state() == Phrase::Resolved)
+    if (!m_source) return;
+    if (state() == Phrase::Resolved)
     {
         m_source->finish(m_source->lastError());
 
-        if(finalized() == Phrase::Aborted)
-        {
+        if (finalized() == Phrase::Aborted)
             m_source->abort();
-        }
     }
 }
 

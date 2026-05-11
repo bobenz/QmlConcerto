@@ -42,7 +42,6 @@ void Pause::setTimeout(int ms)
 //   • If timeout > 0, arm the single-shot timer.
 //   • finishOn is handled entirely by the Phrase base class — when the bound
 //     QML expression evaluates to true, the framework calls finish() for us.
-//     Nothing extra is needed here.
 // ---------------------------------------------------------------------------
 bool Pause::_play()
 {
@@ -53,9 +52,27 @@ bool Pause::_play()
 
     return true;
     // _play() returns; the phrase remains in Playing until:
-    //   a) finishOn becomes true  → Phrase base calls finish()     → Consonant
-    //   b) onTimeout() fires      → we call finish(ERR_PAUSE_TIMEOUT) → Dissonant
-    //   c) abort() is called      → standard Phrase base behaviour  → Aborted
+    //   a) finishOn becomes true  → Phrase base calls finish()          → Consonant
+    //   b) onTimeout() fires      → we call finish(ERR_PAUSE_TIMEOUT)   → Dissonant
+    //   c) abort() is called      → _abort() stops timer, Phrase::abort → Aborted
+}
+
+// ---------------------------------------------------------------------------
+// _abort() — stop the timer; Phrase::abort() drives state transition.
+// ---------------------------------------------------------------------------
+bool Pause::_abort()
+{
+    m_timer.stop();
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// _reset() — stop the timer; Phrase::reset() drives state transition.
+// ---------------------------------------------------------------------------
+bool Pause::_reset()
+{
+    m_timer.stop();
+    return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +85,6 @@ void Pause::onTimeout()
         return;
 
     warning("Pause timed out");
-    error(ERR_PAUSE_TIMEOUT);
     finish(ERR_PAUSE_TIMEOUT);
+    // Note: finish(err) already logs the error report — no separate error() call needed.
 }
