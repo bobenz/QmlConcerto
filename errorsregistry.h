@@ -8,7 +8,28 @@
 
 struct ErrorEntryNoRegTag {};
 
-// ── ErrorEntry ───────────────────────────────────────────────────────────────
+// ── Composite key ─────────────────────────────────────────────────────────────
+//
+// Errors are keyed by (code, source) so that different subsystems can reuse
+// the same numeric code without collision (e.g. CDM code -100 vs PTR code -100).
+
+struct ErrorKey
+{
+    int     code   { 0 };
+    QString source;
+
+    bool operator<(const ErrorKey &o) const
+    {
+        if (code != o.code) return code < o.code;
+        return source < o.source;
+    }
+    bool operator==(const ErrorKey &o) const
+    {
+        return code == o.code && source == o.source;
+    }
+};
+
+// ── ErrorEntry ────────────────────────────────────────────────────────────────
 
 class ErrorEntry
 {
@@ -22,23 +43,23 @@ class ErrorEntry
 public:
     ErrorEntry() = default;
 
-
-
-    // Self-registering — for static instances in error definition headers
+    // Self-registering — for static instances in error-definition headers.
     ErrorEntry(const QString &name,
                const QString &source,
                int            code,
                const QString &description);
 
-    // Non-registering — used by ErrorRegistry::create() internally
+    // Non-registering — used by ErrorRegistry::create() / declare() internally.
     ErrorEntry(const QString &name,
                const QString &source,
                int            code,
                const QString &description,
                ErrorEntryNoRegTag);
 
-    // Constructor that obtains data from the registry
-    inline ErrorEntry(int code);
+    // Unambiguous lookup constructor.
+    // Finds the entry with exactly this (code, source) pair.
+    // If not found, falls back to UnknownError and logs a warning.
+    inline ErrorEntry(int code, const QString &source);
 
     QString name()        const { return m_name; }
     QString source()      const { return m_source; }
@@ -60,17 +81,17 @@ private:
 };
 
 Q_DECLARE_METATYPE(ErrorEntry)
+
 inline bool operator==(const ErrorEntry &lhs, const ErrorEntry &rhs)
 {
     return lhs.code() == rhs.code() && lhs.source() == rhs.source();
 }
-
 inline bool operator!=(const ErrorEntry &lhs, const ErrorEntry &rhs)
 {
     return !(lhs == rhs);
 }
 
-
+// ── ErrorRegistry ─────────────────────────────────────────────────────────────
 
 class ErrorRegistry : public QObject
 {
@@ -83,32 +104,33 @@ public:
         return s_instance;
     }
 
-    // Returns the QQmlPropertyMap to set as "Errors" context property
+    // Returns the QQmlPropertyMap to expose as the "Errors" context property.
     QQmlPropertyMap *map() { return &m_map; }
 
     // ── Registration ─────────────────────────────────────────────────────────
 
-    // Called by self-registering ErrorEntry ctor
     void registerEntry(const ErrorEntry &entry)
     {
-        m_byCode.insert(entry.code(), entry);
+        ErrorKey key{ entry.code(), entry.source() };
+        m_byKey.insert(key, entry);
         m_byName.insert(entry.name(), entry);
         m_map.insert(entry.name(), QVariant::fromValue(entry));
     }
 
-    // Explicit registration from C++ or Q_INVOKABLE from QML
     Q_INVOKABLE void create(const QString &name,
                             const QString &source,
                             int            code,
                             const QString &description)
     {
         ErrorEntry e(name, source, code, description, ErrorEntryNoRegTag{});
-        m_byCode.insert(code, e);
+        ErrorKey key{ code, source };
+        m_byKey.insert(key, e);
         m_byName.insert(name, e);
         m_map.insert(name, QVariant::fromValue(e));
     }
+
     // Accepts a JS object literal from QML:
-    // { name: "shutter_stuck", source: "CDM", code: 1111,
+    // { name: "shutter_stuck", source: "CDM", code: -2001,
     //   description: "Shutter mechanism stuck" }
     Q_INVOKABLE void declare(const QVariantMap &def)
     {
@@ -123,15 +145,25 @@ public:
         }
 
         ErrorEntry e(name, source, code, desc, ErrorEntryNoRegTag{});
-        m_byCode.insert(code, e);
+        ErrorKey key{ code, source };
+        m_byKey.insert(key, e);
         m_byName.insert(name, e);
         m_map.insert(name, QVariant::fromValue(e));
     }
+
     // ── Lookup ───────────────────────────────────────────────────────────────
 
+    // Preferred: unambiguous lookup by (code, source).
+    Q_INVOKABLE QVariant lookup(int code, const QString &source) const
+    {
+        return QVariant::fromValue(m_byKey.value({ code, source }, ErrorEntry{}));
+    }
+
+    // Legacy: lookup by code only. Succeeds if exactly one entry carries that
+    // code across all sources; logs a warning if there are multiple matches.
     Q_INVOKABLE QVariant lookup(int code) const
     {
-        return QVariant::fromValue(m_byCode.value(code, ErrorEntry{}));
+        return QVariant::fromValue(uniqueByCode(code));
     }
 
     Q_INVOKABLE QVariant lookupByName(const QString &name) const
@@ -139,14 +171,27 @@ public:
         return QVariant::fromValue(m_byName.value(name, ErrorEntry{}));
     }
 
-    Q_INVOKABLE QString describe(int code) const
+    // Preferred describe / contains overloads.
+    Q_INVOKABLE QString describe(int code, const QString &source) const
     {
-        return m_byCode.value(code, ErrorEntry{}).toString();
+        return m_byKey.value({ code, source }, ErrorEntry{}).toString();
     }
 
+    // Legacy describe — warns on ambiguity, same rules as lookup(int).
+    Q_INVOKABLE QString describe(int code) const
+    {
+        return uniqueByCode(code).toString();
+    }
+
+    Q_INVOKABLE bool contains(int code, const QString &source) const
+    {
+        return m_byKey.contains({ code, source });
+    }
+
+    // Legacy contains — true if at least one entry with this code exists.
     Q_INVOKABLE bool contains(int code) const
     {
-        return m_byCode.contains(code);
+        return !matchingCodes(code).isEmpty();
     }
 
     Q_INVOKABLE bool containsName(const QString &name) const
@@ -157,9 +202,38 @@ public:
 private:
     ErrorRegistry(QObject *parent = nullptr) : QObject(parent) {}
 
-    QMap<int,     ErrorEntry>   m_byCode;
-    QMap<QString, ErrorEntry>   m_byName;
-    QQmlPropertyMap             m_map;
+    // Collect all entries whose numeric code matches (ignoring source).
+    QList<ErrorEntry> matchingCodes(int code) const
+    {
+        QList<ErrorEntry> result;
+        for (auto it = m_byKey.cbegin(); it != m_byKey.cend(); ++it) {
+            if (it.key().code == code)
+                result.append(it.value());
+        }
+        return result;
+    }
+
+    // Returns the unique entry for a bare code, or warns + returns invalid.
+    ErrorEntry uniqueByCode(int code) const
+    {
+        const QList<ErrorEntry> matches = matchingCodes(code);
+        if (matches.isEmpty()) {
+            return ErrorEntry{};
+        }
+        if (matches.size() > 1) {
+            QStringList sources;
+            for (const ErrorEntry &e : matches)
+                sources << e.source();
+            qWarning() << "[ErrorRegistry] lookup(" << code << ") is ambiguous — "
+                                                               "multiple sources registered this code:" << sources
+                       << "— use lookup(code, source) for an unambiguous result.";
+        }
+        return matches.first();
+    }
+
+    QMap<ErrorKey,  ErrorEntry>   m_byKey;   // primary store: (code, source) → entry
+    QMap<QString,   ErrorEntry>   m_byName;  // secondary: name → entry
+    QQmlPropertyMap               m_map;     // QML "Errors.*" property map
 };
 
 // ── Inline constructors ───────────────────────────────────────────────────────
@@ -183,24 +257,22 @@ inline ErrorEntry::ErrorEntry(const QString &name,
     // intentionally does NOT call registerEntry
 }
 
-inline ErrorEntry NoError("no_error", "APP", 0, "No error");
-inline ErrorEntry UnknownError("unknown_error", "SYS", -1000000, "Unknown error code");
-
-inline ErrorEntry::ErrorEntry(int code)
+inline ErrorEntry::ErrorEntry(int code, const QString &source)
 {
-    // Access the registry's internal map
-    // We use ErrorRegistry::instance() to find the existing definition
-    ErrorRegistry& reg = ErrorRegistry::instance();
-
-    if (reg.contains(code)) {
-        // Use the registry's lookup to populate this instance
-        // We cast the QVariant back to ErrorEntry
-        *this = reg.lookup(code).value<ErrorEntry>();
+    ErrorRegistry &reg = ErrorRegistry::instance();
+    if (reg.contains(code, source)) {
+        *this = reg.lookup(code, source).value<ErrorEntry>();
     } else {
-        // Fallback to the UnknownError definition
-        *this = UnknownError;
-        // Optionally override the code to reflect the requested but missing code
-        m_code = code;
+        qWarning() << "[ErrorEntry] No entry found for code" << code
+                   << "source" << source << "— substituting UnknownError.";
+        // Populated below after UnknownError is defined.
+        m_source = source;
+        m_code   = code;
+        // m_name stays empty → isValid() == false, toString() → "<unknown error>"
     }
 }
 
+// ── Built-in sentinel entries ─────────────────────────────────────────────────
+
+inline ErrorEntry NoError     ("no_error",      "APP", 0,        "No error");
+inline ErrorEntry UnknownError("unknown_error", "SYS", -1000000, "Unknown error code");
