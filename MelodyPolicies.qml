@@ -69,6 +69,19 @@ QtObject {
         }
     }
 
+    // Always overwrite melody.lastError with the most recent child error.
+    // Use as Chord's default so the final error reflects the last Dissonant child.
+    readonly property var keepLastError: function(phrases, melody) {
+        for (var i = 0; i < phrases.length; i++) {
+            (function(p) {
+                p.finalizedChanged.connect(function() {
+                    if (p.finalized === Phrase.Dissonant)
+                        melody.lastError = p.lastError
+                })
+            })(phrases[i])
+        }
+    }
+
     // Set melody.lastError only when it is currently NoError — preserve the
     // first error and ignore any subsequent ones.
     readonly property var keepFirstError: function(phrases, melody) {

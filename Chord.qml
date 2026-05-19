@@ -3,33 +3,27 @@ import Concerto 1.0
 
 Melody {
     id: root
-    // Finish when every phrase has resolved
-    finishOn:{
-        for (let i = 0; i < phrases.length; i++) {
-            if (phrases[i].state !== Phrase.Resolved) return false;
-        }
-        return true;
-    }
+    // keepLastError accumulates the final error across all children so that
+    // root.finish(root.lastError) below propagates the last Dissonant result.
+    activePolicies: [MelodyPolicies.keepLastError]
+
     Component.onCompleted: {
         if (phrases.length === 0) return;
 
         for (let i = 0; i < phrases.length; i++) {
             let currentPhrase = phrases[i];
 
-            // All phrases start simultaneously when root starts
             currentPhrase.after = Qt.binding(() => root.state === Phrase.Playing);
 
-            // Abort all playing phrases when root is aborted
-            currentPhrase.abortOn = Qt.binding(() =>
-                root.state === Phrase.Resolved &&
-                root.finalized === Phrase.Aborted
-            );
+            // Abort all children whenever root resolves (policy-triggered or external).
+            currentPhrase.abortOn = Qt.binding(() => root.state === Phrase.Resolved);
 
-            // Error propagation
-            currentPhrase.onFinalizedChanged.connect(() => {
-                if (currentPhrase.finalized === Phrase.Dissonant) {
-                    root.lastError = currentPhrase.lastError;
+            // When any phrase exits, check if all have resolved; finish if so.
+            currentPhrase.onExit.connect(() => {
+                for (let j = 0; j < phrases.length; j++) {
+                    if (phrases[j].state !== Phrase.Resolved) return;
                 }
+                if (root.playing) root.finish(root.lastError);
             });
         }
 

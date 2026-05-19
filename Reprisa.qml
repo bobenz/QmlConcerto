@@ -3,6 +3,7 @@ import Concerto 1.0
 
 Melody {
     id: root
+    activePolicies: [MelodyPolicies.dissonantOnFirstError]
 
     // Alias the root as 'reprisa' so children can access it
     // consistently even if the QML hierarchy shifts.
@@ -24,22 +25,24 @@ Melody {
 
         child.after = Qt.binding(() => root.state === Phrase.Playing);
 
+        // Policies run first so their finalizedChanged connections fire before
+        // the loop-control handler below (connection order determines fire order).
+        runPolicies()
+
         child.finalizedChanged.connect(() => {
             if (child.state !== Phrase.Resolved) return;
 
-            if (child.finalized === Phrase.Dissonant) {
-                root.finish(child.lastError);
-            } else if (child.finalized === Phrase.Aborted) {
+            if (child.finalized === Phrase.Aborted) {
                 root.abort();
             } else {
-                // Consonant: check exit condition, then loop or finish
+                // Consonant or Dissonant: check exit condition, then loop or finish.
+                // Error propagation is handled entirely by activePolicies.
                 if (root.finishOn) {
                     root.finish();
                 } else {
-                    child.play();
+                    Qt.callLater(() => { if (root.playing) child.play(); })
                 }
             }
         });
-        runPolicies()
     }
 }

@@ -15,6 +15,9 @@ import Concerto 1.0
 
 Melody {
     id: root
+    // No default policy — Cadenza's race semantics already propagate the
+    // first resolver's outcome (Consonant or Dissonant) to the melody.
+    activePolicies: []
 
     Component.onCompleted: {
         if (phrases.length === 0) return;
