@@ -36,7 +36,6 @@ Melody {
                 if (root.finishOn) {
                     root.finish();
                 } else {
-                    child.reset();
                     child.play();
                 }
             }

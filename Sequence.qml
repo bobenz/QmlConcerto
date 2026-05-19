@@ -18,9 +18,9 @@ Melody {
                     root.lastError = current.lastError;
             });
             if (next !== null) {
-                // Chain to next on normal resolution
+                // Chain to next on any resolution except Aborted
                 current.onExit.connect(() => {
-                    if (current.finalized === Phrase.Consonant)
+                    if (current.finalized === Phrase.Consonant || current.finalized === Phrase.Dissonant)
                         Qt.callLater(() => next.play());
                 });
                 // Chain to next when entering Accompanying

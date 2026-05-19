@@ -220,7 +220,7 @@ private:
 
     bool m_abortOn       = false;
     bool m_finishOn      = false;
-    bool m_finishOnError = true;
+    bool m_finishOnError = false;
 
     QString m_tag;
 };
