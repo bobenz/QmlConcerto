@@ -27,8 +27,9 @@ SOURCES += \
 RESOURCES += \
     $$PWD/notes.qrc
 
-# QML files — listed so Qt Creator shows them in the project tree
+# QML files and module descriptor — listed so Qt Creator shows them in the project tree
 DISTFILES += \
+    $$PWD/qmldir \
     $$PWD/Sequence.qml \
     $$PWD/Chord.qml \
     $$PWD/Cadenza.qml \
