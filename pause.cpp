@@ -52,9 +52,10 @@ bool Pause::_play()
 
     return true;
     // _play() returns; the phrase remains in Playing until:
-    //   a) finishOn becomes true  → Phrase base calls finish()          → Consonant
-    //   b) onTimeout() fires      → we call finish(ERR_PAUSE_TIMEOUT)   → Dissonant
-    //   c) abort() is called      → _abort() stops timer, Phrase::abort → Aborted
+    //   a) finishOn becomes true          → Phrase base calls finish()        → Consonant
+    //   b) timeout fires + finishOn bound → finish(ERR_PAUSE_TIMEOUT)         → Dissonant
+    //   c) timeout fires, no finishOn     → finish()                          → Consonant
+    //   d) abort() is called              → _abort() stops timer              → Aborted
 }
 
 // ---------------------------------------------------------------------------
@@ -84,7 +85,13 @@ void Pause::onTimeout()
     if (state() != Phrase::Playing && state() != Phrase::Accompanying)
         return;
 
-    warning("Pause timed out");
-    finish(ERR_PAUSE_TIMEOUT);
-    // Note: finish(err) already logs the error report — no separate error() call needed.
+    if (finishOnBound()) {
+        // finishOn was bound but the condition wasn't met in time → Dissonant
+        warning("Pause timed out");
+        finish(ERR_PAUSE_TIMEOUT);
+    } else {
+        // No finishOn — timeout is the sole completion trigger → Consonant
+        info("Pause elapsed");
+        finish();
+    }
 }

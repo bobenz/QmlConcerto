@@ -19,9 +19,10 @@
 //   }
 //
 // Outcomes:
-//   • finishOn becomes true  → finish()  → Consonant  (normal)
-//   • timeout fires first    → finish()  → Dissonant  (ERR_PAUSE_TIMEOUT)
-//   • abort() called         → Aborted               (standard Phrase behaviour)
+//   • finishOn becomes true  → finish()           → Consonant  (normal)
+//   • timeout fires, finishOn was bound → finish(ERR_PAUSE_TIMEOUT) → Dissonant
+//   • timeout fires, no finishOn bound → finish()              → Consonant
+//   • abort() called         → Aborted                          (standard Phrase behaviour)
 //
 // Notes:
 //   • finishOn is inherited from Phrase and wired by the framework; no extra

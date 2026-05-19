@@ -265,20 +265,31 @@ void Phrase::setLyric(const QString &newLyric)
 }
 
 bool Phrase::abortOn() const { return m_abortOn; }
+bool Phrase::abortOnBound() const { return m_abortOnBound; }
 
 void Phrase::setAbortOn(bool newAbortOn)
 {
-    if (m_abortOn == newAbortOn) return;
+    if (!m_abortOnBound) {
+        m_abortOnBound = true;
+        emit abortOnBoundChanged();
+    }
+    const bool changed = (m_abortOn != newAbortOn);
     m_abortOn = newAbortOn;
     if (m_abortOn)
         abort();
-    emit abortOnChanged();
+    if (changed)
+        emit abortOnChanged();
 }
 
 bool Phrase::finishOn() const { return m_finishOn; }
+bool Phrase::finishOnBound() const { return m_finishOnBound; }
 
 void Phrase::setFinishOn(bool newFinishOn)
 {
+    if (!m_finishOnBound) {
+        m_finishOnBound = true;
+        emit finishOnBoundChanged();
+    }
     const bool changed = (m_finishOn != newFinishOn);
     m_finishOn = newFinishOn;
     if (m_finishOn)

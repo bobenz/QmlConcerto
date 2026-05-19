@@ -53,8 +53,10 @@ class Phrase : public QObject
     Q_PROPERTY(ErrorEntry lastError READ lastError WRITE setLastError NOTIFY lastErrorChanged FINAL)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged FINAL)
     Q_PROPERTY(QString lyric READ lyric WRITE setLyric NOTIFY lyricChanged FINAL)
-    Q_PROPERTY(bool abortOn READ abortOn WRITE setAbortOn NOTIFY abortOnChanged FINAL)
-    Q_PROPERTY(bool finishOn READ finishOn WRITE setFinishOn NOTIFY finishOnChanged FINAL)
+    Q_PROPERTY(bool abortOn      READ abortOn      WRITE setAbortOn      NOTIFY abortOnChanged      FINAL)
+    Q_PROPERTY(bool abortOnBound READ abortOnBound                       NOTIFY abortOnBoundChanged FINAL)
+    Q_PROPERTY(bool finishOn      READ finishOn      WRITE setFinishOn      NOTIFY finishOnChanged      FINAL)
+    Q_PROPERTY(bool finishOnBound READ finishOnBound                        NOTIFY finishOnBoundChanged FINAL)
     Q_PROPERTY(bool finishOnError READ finishOnError  WRITE setFinishOnError NOTIFY finishOnErrorChanged FINAL)
     Q_PROPERTY(bool playing READ playing  NOTIFY playingChanged FINAL)
     Q_PROPERTY(QString  tag READ tag WRITE setTag NOTIFY tagChanged FINAL)
@@ -101,10 +103,12 @@ public:
     void setParentPath(QString p) { m_parentPath = p; }
 
     bool abortOn() const;
-    void setAbortOn(bool newAbortOn);
+    bool abortOnBound() const;
+    virtual void setAbortOn(bool newAbortOn);
 
     bool finishOn() const;
-    void setFinishOn(bool newFinishOn);
+    bool finishOnBound() const;
+    virtual void setFinishOn(bool newFinishOn);
 
     bool finishOnError() const;
     void setFinishOnError(bool newFinishOnError);
@@ -141,7 +145,9 @@ signals:
     void lyricChanged();
     void report(Report) const;
     void abortOnChanged();
+    void abortOnBoundChanged();
     void finishOnChanged();
+    void finishOnBoundChanged();
     void finishOnErrorChanged();
     void playingChanged();
     void tagChanged();
@@ -218,9 +224,11 @@ private:
         return m_title.isEmpty() ? QLatin1String(metaObject()->className()) : m_title;
     }
 
-    bool m_abortOn       = false;
-    bool m_finishOn      = false;
-    bool m_finishOnError = false;
+    bool m_abortOn        = false;
+    bool m_abortOnBound   = false;
+    bool m_finishOn       = false;
+    bool m_finishOnBound  = false;
+    bool m_finishOnError  = false;
 
     QString m_tag;
 };
