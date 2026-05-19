@@ -35,7 +35,7 @@ public:
         // 3. Expose the PropertyMap as "Errors" for easy dot-notation access
         // This allows you to write: Errors.shutter_stuck.description
         engine->rootContext()->setContextProperty("Errors", ErrorRegistry::instance().map());
-        engine->addImportPath(CONCERTO_HOME);
+        engine->addImportPath("qrc:/");
     }
 };
 
