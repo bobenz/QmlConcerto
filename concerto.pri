@@ -27,4 +27,13 @@ SOURCES += \
 RESOURCES += \
     $$PWD/notes.qrc
 
+# QML files — listed so Qt Creator shows them in the project tree
+DISTFILES += \
+    $$PWD/Sequence.qml \
+    $$PWD/Chord.qml \
+    $$PWD/Cadenza.qml \
+    $$PWD/Reprisa.qml \
+    $$PWD/Sonata.qml \
+    $$PWD/MelodyPolicies.qml
+
 DEFINES += "CONCERTO_HOME=\\\"$$PWD\\\""
