@@ -43,6 +43,6 @@ Melody {
                 });
             }
         }
-
+        runPolicies()
     }
 }

@@ -59,5 +59,6 @@ Melody {
                 }
             });
         }
+        runPolicies()
     }
 }

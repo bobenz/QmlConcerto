@@ -33,12 +33,6 @@ Melody {
             });
         }
 
-        // // Finish when every phrase has resolved
-        // root.finishOn = Qt.binding(function() {
-        //     for (let i = 0; i < phrases.length; i++) {
-        //         if (phrases[i].state !== Phrase.Resolved) return false;
-        //     }
-        //     return true;
-        // });
+        runPolicies()
     }
 }
