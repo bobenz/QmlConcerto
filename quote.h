@@ -70,7 +70,7 @@ private slots:
     void onSourceStateChanged();
     void onMyStateChanged();
     void onSourceLastErrorChanged();
-
+ void onSourceFinalizedChanged();
 private:
     void wireSource(Phrase *src);
     void unwireSource(Phrase *src);
@@ -79,6 +79,7 @@ private:
     QMetaObject::Connection m_connState;
     QMetaObject::Connection m_connReport;
     QMetaObject::Connection m_connError;
+      QMetaObject::Connection m_connFin;
 };
 
 #endif // QUOTE_H

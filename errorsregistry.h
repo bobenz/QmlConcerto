@@ -58,8 +58,15 @@ public:
 
     // Unambiguous lookup constructor.
     // Finds the entry with exactly this (code, source) pair.
-    // If not found, falls back to UnknownError and logs a warning.
+    // If not found, logs a warning and leaves isValid() == false.
     inline ErrorEntry(int code, const QString &source);
+
+    // Ambiguous lookup constructor — legacy / convenience.
+    // Succeeds silently when exactly one source carries this code.
+    // Logs a qWarning when multiple sources share the code (same rule as
+    // ErrorRegistry::lookup(int)) and returns the first match.
+    // Prefer ErrorEntry(code, source) whenever the source is known.
+    inline explicit ErrorEntry(int code);
 
     QString name()        const { return m_name; }
     QString source()      const { return m_source; }
@@ -270,6 +277,18 @@ inline ErrorEntry::ErrorEntry(int code, const QString &source)
         m_code   = code;
         // m_name stays empty → isValid() == false, toString() → "<unknown error>"
     }
+}
+
+inline ErrorEntry::ErrorEntry(int code)
+{
+    // Same ambiguity-warning logic as ErrorRegistry::lookup(int):
+    // succeeds silently for a unique match, warns when multiple sources share
+    // the code, leaves isValid()==false when nothing is registered.
+    ErrorRegistry &reg = ErrorRegistry::instance();
+    QVariant v = reg.lookup(code);   // lookup(int) already handles the warning
+    if (v.isValid())
+        *this = v.value<ErrorEntry>();
+    // else: default-constructed → isValid() == false
 }
 
 // ── Built-in sentinel entries ─────────────────────────────────────────────────

@@ -279,12 +279,14 @@ bool Phrase::finishOn() const { return m_finishOn; }
 
 void Phrase::setFinishOn(bool newFinishOn)
 {
-    if (m_finishOn == newFinishOn) return;
+    const bool changed = (m_finishOn != newFinishOn);
     m_finishOn = newFinishOn;
     if (m_finishOn)
         finish();
-    emit finishOnChanged();
+    if (changed)
+        emit finishOnChanged();
 }
+
 
 bool Phrase::finishOnError() const { return m_finishOnError; }
 

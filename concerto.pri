@@ -26,3 +26,5 @@ SOURCES += \
 # Resources
 RESOURCES += \
     $$PWD/notes.qrc
+
+DEFINES += "CONCERTO_HOME=\\\"$$PWD\\\""

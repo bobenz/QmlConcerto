@@ -59,6 +59,9 @@ void Quote::wireSource(Phrase *src)
     m_connError = connect(src, &Phrase::lastErrorChanged,
                           this, &Quote::onSourceLastErrorChanged);
 
+    m_connFin = connect(src, &Phrase::finalizedChanged,
+                        this, &Quote::onSourceFinalizedChanged);
+
     // Forward all source reports through Quote's report signal so they
     // participate in the normal report-bubbling hierarchy.
     m_connReport = connect(src, &Phrase::report,
@@ -93,7 +96,6 @@ bool Quote::_play()
         return false;
     }
 
-    setState(m_source->state());
     m_source->play();
     return true;
 }
@@ -150,4 +152,13 @@ void Quote::onMyStateChanged()
 void Quote::onSourceLastErrorChanged()
 {
     setLastError(m_source->lastError());
+}
+
+void Quote::onSourceFinalizedChanged()
+{
+    if (!m_source)
+        return;
+
+    qDebug() << "SOURCE STATE " << m_source->state();
+    setFinalized(m_source->finalized());
 }

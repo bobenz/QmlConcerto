@@ -26,14 +26,16 @@ public:
         qmlRegisterType<Melody>        (uri, major, minor, "Melody");
         qmlRegisterType<Pause>        (uri, major, minor, "Pause");
         qmlRegisterType<Quote>        (uri, major, minor, "Quote");
+
         qRegisterMetaType<ErrorEntry>("ErrorEntry");
 
         // 2. Expose the Registry itself to call functions like lookup() or declare()
         engine->rootContext()->setContextProperty("ErrorRegistry", &ErrorRegistry::instance());
-        qmlRegisterSingletonType<Partitura>("Concerto.Core", 1, 0, "Partitura", partitura_provider);
+        qmlRegisterSingletonType<Partitura>("Concerto", 1, 0, "Partitura", partitura_provider);
         // 3. Expose the PropertyMap as "Errors" for easy dot-notation access
         // This allows you to write: Errors.shutter_stuck.description
         engine->rootContext()->setContextProperty("Errors", ErrorRegistry::instance().map());
+        engine->addImportPath(CONCERTO_HOME);
     }
 };
 

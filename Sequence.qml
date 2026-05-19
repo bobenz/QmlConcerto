@@ -1,44 +1,48 @@
 import QtQuick 2.15
 import Concerto 1.0
-
 Melody {
     id: root
-
+    property Phrase first
+    onEnter:Qt.callLater(() =>{if (root.first) root.first.play()})
     Component.onCompleted: {
         if (phrases.length === 0) return;
-
         for (let i = 0; i < phrases.length; i++) {
-            let currentPhrase = phrases[i];
-            let prevPhrase = (i > 0) ? phrases[i - 1] : null;
-
-            // Start condition
-            if (i === 0) {
-                currentPhrase.after = Qt.binding(() => root.state === Phrase.Playing);
-            } else {
-                // Only start if previous phrase resolved AND was NOT aborted
-                currentPhrase.after = Qt.binding(() =>
-                    prevPhrase.state === Phrase.Resolved &&
-                    prevPhrase.finalized !== Phrase.Aborted
-                );
-            }
-
-            // Abort propagation: if root is aborted, abort the current (playing) phrase
-            currentPhrase.abortOn = Qt.binding(() => root.state === Phrase.Resolved &&
-                                                      root.finalized === Phrase.Aborted);
-
+            let current = phrases[i];
+            if(i === 0) root.first = current
+            let next = (i < phrases.length - 1) ? phrases[i + 1] : null;
+            // Abort propagation
+            current.abortOn = Qt.binding(() => root.finalized === Phrase.Aborted);
             // Error propagation
-            currentPhrase.onFinalizedChanged.connect(() => {
-                if (currentPhrase.finalized === Phrase.Dissonant) {
-                    root.lastError = currentPhrase.lastError;
-                }
+            current.onExit.connect(() => {
+                if (current.finalized === Phrase.Dissonant)
+                    root.lastError = current.lastError;
             });
+            if (next !== null) {
+                // Chain to next on normal resolution
+                current.onExit.connect(() => {
+                    if (current.finalized === Phrase.Consonant)
+                        Qt.callLater(() => next.play());
+                });
+                // Chain to next when entering Accompanying
+                current.onStateChanged.connect(() => {
+                    if (current.state === Phrase.Accompanying)
+                        Qt.callLater(() => next.play());
+                });
+            } else {
+                // Last phrase — finish the sequence
+                current.onExit.connect(() => {
+                    switch (current.finalized) {
+                        case Phrase.Consonant:  Qt.callLater(() => root.finish());                   break;
+                        case Phrase.Dissonant:  Qt.callLater(() => root.finish(current.lastError));  break;
+                        case Phrase.Aborted:    Qt.callLater(() => root.abort());                    break;
+                    }
+                });
+                current.onStateChanged.connect(() => {
+                    if (current.state === Phrase.Accompanying)
+                        Qt.callLater(() => root.finish());
+                });
+            }
         }
 
-        // Melody finishes when last phrase resolves
-        let last = phrases[phrases.length - 1];
-        root.finishOn = Qt.binding(() =>
-            last.state === Phrase.Resolved &&
-            last.finalized !== Phrase.Aborted
-        );
     }
 }
