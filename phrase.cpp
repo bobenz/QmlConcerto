@@ -50,7 +50,9 @@ bool Phrase::play()
     setFinalized(None);
     setState(Playing);
     emit enter();
-    return _play();
+    bool ret = _play();
+    if(!ret) finish();
+    return ret;
     // No _play_complete(): completion is driven by the subclass via
     // finish() or accompany(), exactly as before.
 }
@@ -139,8 +141,8 @@ void Phrase::_reset_complete()
 
 bool Phrase::_play()
 {
-    finish();
-    return true;
+    //finish();
+    return false;
 }
 
 bool Phrase::_abort()
