@@ -2,7 +2,7 @@ import QtQuick 2.15
 import Concerto 1.0
 Melody {
     id: root
-    activePolicies: [MelodyPolicies.dissonantOnFirstError]
+    activePolicies: [MelodyPolicies.keepLastError]
     property Phrase first
     onEnter:Qt.callLater(() =>{if (root.first) root.first.play()})
     Component.onCompleted: {

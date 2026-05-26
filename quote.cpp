@@ -96,6 +96,15 @@ bool Quote::_play()
         return false;
     }
 
+    // Mirror immediately if source is already resolved — re-playing it would
+    // reset and restart it, not mirror its existing outcome.
+    if (m_source->state() == Phrase::Resolved) {
+        if      (m_source->finalized() == Phrase::Consonant)  finish();
+        else if (m_source->finalized() == Phrase::Dissonant)  finish(m_source->lastError());
+        else                                                   abort();
+        return false;
+    }
+
     m_source->play();
     return true;
 }

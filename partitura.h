@@ -26,7 +26,7 @@ public:
 
 private:
     // Private constructor for singleton pattern
-    explicit Partitura(QObject *parent = nullptr) : QQmlPropertyMap(parent) {}
+    explicit Partitura(QObject *parent = nullptr) : QQmlPropertyMap(static_cast<Partitura*>(nullptr), parent) {}
 
 
     bool isValidKey(const QString &key) const {

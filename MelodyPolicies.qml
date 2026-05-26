@@ -82,14 +82,14 @@ QtObject {
         }
     }
 
-    // Set melody.lastError only when it is currently NoError — preserve the
-    // first error and ignore any subsequent ones.
+    // Set melody.lastError only when it is currently NoError (code===0) — preserve
+    // the first error and ignore any subsequent ones.
     readonly property var keepFirstError: function(phrases, melody) {
         for (var i = 0; i < phrases.length; i++) {
             (function(p) {
                 p.finalizedChanged.connect(function() {
                     if (p.finalized === Phrase.Dissonant
-                            && melody.lastError === NoError)
+                            && melody.lastError.code === 0)  // NoError has code=0
                         melody.lastError = p.lastError
                 })
             })(phrases[i])
@@ -109,7 +109,7 @@ QtObject {
         for (var i = 0; i < phrases.length; i++) {
             (function(p) {
                 p.finalizedChanged.connect(function() {
-                    if (p.state !== Phrase.Resolved) return
+                    if (p.finalized === Phrase.None) return  // spurious signal guard (reset)
                     if (p.finalized === Phrase.Dissonant) {
                         dissonantCount++
                         if (dissonantCount === total && melody.playing)

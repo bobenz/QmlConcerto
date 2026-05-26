@@ -12,7 +12,13 @@ Melody {
     Component.onCompleted: {
         if (phrases.length !== 1) {
             console.warn("Reprisa: expected exactly 1 child phrase");
-            root.finish("Invalid child count");
+            ErrorRegistry.declare({ name: "reprisa_invalid_child", source: "Reprisa",
+                                    code: -9020, description: "Reprisa requires exactly 1 child phrase" })
+            // root is Silent here — finish() would be a no-op.
+            // Connect to enter so the error fires the moment play() is called.
+            root.enter.connect(function() {
+                root.finish(Errors.reprisa_invalid_child);
+            });
             return;
         }
         const child = phrases[0];
@@ -30,7 +36,7 @@ Melody {
         runPolicies()
 
         child.finalizedChanged.connect(() => {
-            if (child.state !== Phrase.Resolved) return;
+            if (child.finalized === Phrase.None) return;  // spurious signal guard (reset)
 
             if (child.finalized === Phrase.Aborted) {
                 root.abort();

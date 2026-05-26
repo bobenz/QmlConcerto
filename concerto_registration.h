@@ -38,6 +38,7 @@ public:
         // This allows you to write: Errors.shutter_stuck.description
         engine->rootContext()->setContextProperty("Errors", ErrorRegistry::instance().map());
         engine->addImportPath("qrc:/");
+        engine->addImportPath(CONCERTO_HOME);
     }
 };
 
