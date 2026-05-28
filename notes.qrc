@@ -6,5 +6,6 @@
         <file>Cadenza.qml</file>
         <file>Reprisa.qml</file>
         <file>Sonata.qml</file>
+        <file>MelodyPolicies.qml</file>
     </qresource>
 </RCC>

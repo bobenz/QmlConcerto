@@ -1,8 +1,11 @@
 module Concerto
 
 # QML composition components
-Sequence 1.0 Sequence.qml
-Chord    1.0 Chord.qml
-Cadenza  1.0 Cadenza.qml
-Reprisa  1.0 Reprisa.qml
-Sonata   1.0 Sonata.qml
+Sequence          1.0 Sequence.qml
+Chord             1.0 Chord.qml
+Cadenza           1.0 Cadenza.qml
+Reprisa           1.0 Reprisa.qml
+Sonata            1.0 Sonata.qml
+
+# Singleton
+singleton MelodyPolicies 1.0 MelodyPolicies.qml

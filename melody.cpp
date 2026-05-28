@@ -1,4 +1,5 @@
 #include "melody.h"
+#include <QQmlEngine>
 
 Melody::Melody(QObject *parent) : Phrase(parent)
 {
@@ -40,6 +41,37 @@ QQmlListProperty<Phrase> Melody::phrases()
 QList<Phrase*> Melody::phraseList() const
 {
     return m_phrases;
+}
+
+// ── activePolicies ────────────────────────────────────────────────────────────
+
+QJSValue Melody::activePolicies() const { return m_activePolicies; }
+
+void Melody::setActivePolicies(const QJSValue &val)
+{
+    m_activePolicies = val;
+    emit activePoliciesChanged();
+}
+
+void Melody::runPolicies()
+{
+    QQmlEngine *engine = qmlEngine(this);
+    if (!engine || !m_activePolicies.isArray()) return;
+
+    const int n = m_phrases.size();
+    QJSValue arr = engine->newArray(n);
+    for (int i = 0; i < n; i++)
+        arr.setProperty(i, engine->newQObject(m_phrases[i]));
+
+    QJSValue self = engine->newQObject(this);
+    const int len = m_activePolicies.property("length").toInt();
+    for (int i = 0; i < len; i++) {
+        QJSValue fn = m_activePolicies.property(i);
+        if (!fn.isCallable()) continue;
+        QJSValue result = fn.call({arr, self});
+        if (result.isError())
+            qWarning() << "Melody activePolicies[" << i << "] threw:" << result.toString();
+    }
 }
 
 // Static Callbacks for QML Engine

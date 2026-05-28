@@ -34,6 +34,7 @@ DISTFILES += \
     $$PWD/Chord.qml \
     $$PWD/Cadenza.qml \
     $$PWD/Reprisa.qml \
-    $$PWD/Sonata.qml
+    $$PWD/Sonata.qml \
+    $$PWD/MelodyPolicies.qml
 
 DEFINES += "CONCERTO_HOME=\\\"$$PWD\\\""

@@ -15,12 +15,16 @@ import Concerto 1.0
 
 Melody {
     id: root
+    // No default policy — Cadenza's race semantics already propagate the
+    // first resolver's outcome (Consonant or Dissonant) to the melody.
+    activePolicies: []
 
     Component.onCompleted: {
         if (phrases.length === 0) return;
 
         // Guard: only the first winner is processed.
         let raceOver = false;
+        root.cleanup.connect(() => { raceOver = false; });
 
         for (let i = 0; i < phrases.length; i++) {
             let p = phrases[i];
@@ -30,12 +34,11 @@ Melody {
 
             // Each child watches for resolution and volunteers as winner.
             p.finalizedChanged.connect(() => {
-                if (p.state !== Phrase.Resolved) return;  // spurious signal guard
+                if (p.finalized === Phrase.None) return;  // spurious signal guard (reset)
                 if (raceOver) return;                      // another child already won
-                raceOver = true;
+                if (p.finalized === Phrase.Aborted) return; // external abort — not a win; race continues
 
-                // Propagate winner's outcome to root.
-                root.lastError = p.lastError;              // NoError if Consonant
+                raceOver = true;
 
                 // Abort all losers that are still active.
                 for (let j = 0; j < phrases.length; ++j) {
@@ -48,16 +51,12 @@ Melody {
                 }
 
                 // Resolve root with the same outcome as the winner.
-                if (p.finalized === Phrase.Consonant) {
-                    root.finish();                         // Consonant
-                } else if (p.finalized === Phrase.Dissonant) {
+                if (p.finalized === Phrase.Consonant)
+                    root.finish();
+                else
                     root.finish(p.lastError);              // Dissonant
-                } else {
-                    // Winner was itself Aborted (external abort()) —
-                    // treat as if it never won; wait for next resolver.
-                    raceOver = false;
-                }
             });
         }
+        runPolicies()
     }
 }

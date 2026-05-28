@@ -38,17 +38,21 @@ bool Phrase::play()
     }
     if (m_finishOn) {
         setFinalized(Finalized::Consonant);
+        setState(Resolved);
         return false;
     }
     if (m_abortOn) {
         setFinalized(Finalized::Aborted);
+        setState(Resolved);
         return false;
     }
 
     setFinalized(None);
     setState(Playing);
     emit enter();
-    return _play();
+    bool ret = _play();
+    if(!ret) finish();
+    return ret;
     // No _play_complete(): completion is driven by the subclass via
     // finish() or accompany(), exactly as before.
 }
@@ -115,7 +119,8 @@ void Phrase::_finish_complete(const ErrorEntry &error)
         << "_finish_complete() called outside Playing/Accompanying — ignored";
         return;
     }
-    setLastError(error);
+    if (error != NoError)
+        setLastError(error);
     setFinalized(error == NoError ? Consonant : Dissonant);
     setState(Resolved);
 }
@@ -126,14 +131,18 @@ void Phrase::_reset_complete()
     setFinalized(Finalized::None);
     setLastError(NoError);
     setState(Silent);
+    if (m_finishOn)      { m_finishOn      = false; emit finishOnChanged(); }
+    if (m_finishOnBound) { m_finishOnBound = false; emit finishOnBoundChanged(); }
+    if (m_abortOn)       { m_abortOn       = false; emit abortOnChanged(); }
+    if (m_abortOnBound)  { m_abortOnBound  = false; emit abortOnBoundChanged(); }
 }
 
 // ── Default virtual implementations — synchronous no-ops ─────────────────────
 
 bool Phrase::_play()
 {
-    finish();
-    return true;
+    //finish();
+    return false;
 }
 
 bool Phrase::_abort()
