@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick 2.15
-import Concerto 1.0
+//import Concerto 1.0
 
 // Built-in policy functions for Melody.activePolicies.
 // Each policy is a function(phrases, melody) that walks the phrase list
@@ -10,12 +10,17 @@ import Concerto 1.0
 
 QtObject {
 
+        readonly property int none:0   // 0
+        readonly property int aborted:1   // 1
+        readonly property int dissonant:2 // 2
+        readonly property int consonant :3 // 3
+
     // Resolve Melody Dissonant the moment any child resolves Dissonant.
     readonly property var dissonantOnFirstError: function(phrases, melody) {
         for (var i = 0; i < phrases.length; i++) {
             (function(p) {
                 p.finalizedChanged.connect(function() {
-                    if (p.finalized === Phrase.Dissonant && melody.playing)
+                    if (p.finalized === dissonant && melody.playing)
                         melody.finish(p.lastError)
                 })
             })(phrases[i])
@@ -27,7 +32,7 @@ QtObject {
         for (var i = 0; i < phrases.length; i++) {
             (function(p) {
                 p.finalizedChanged.connect(function() {
-                    if (p.finalized === Phrase.Dissonant && melody.playing)
+                    if (p.finalized === dissonant && melody.playing)
                         melody.abort()
                 })
             })(phrases[i])
@@ -40,7 +45,7 @@ QtObject {
         for (var i = 0; i < phrases.length; i++) {
             (function(p) {
                 p.finalizedChanged.connect(function() {
-                    if (p.finalized !== Phrase.Dissonant) return
+                    if (p.finalized !== dissonant) return
                     for (var j = 0; j < phrases.length; j++) {
                         var sibling = phrases[j]
                         if (sibling !== p && sibling.playing)
@@ -57,7 +62,7 @@ QtObject {
         for (var i = 0; i < phrases.length; i++) {
             (function(p) {
                 p.finalizedChanged.connect(function() {
-                    if (p.finalized !== Phrase.Dissonant || !melody.playing) return
+                    if (p.finalized !== dissonant || !melody.playing) return
                     for (var j = 0; j < phrases.length; j++) {
                         var sibling = phrases[j]
                         if (sibling !== p && sibling.playing)
@@ -75,7 +80,7 @@ QtObject {
         for (var i = 0; i < phrases.length; i++) {
             (function(p) {
                 p.finalizedChanged.connect(function() {
-                    if (p.finalized === Phrase.Dissonant)
+                    if (p.finalized === dissonant)
                         melody.lastError = p.lastError
                 })
             })(phrases[i])
@@ -88,7 +93,7 @@ QtObject {
         for (var i = 0; i < phrases.length; i++) {
             (function(p) {
                 p.finalizedChanged.connect(function() {
-                    if (p.finalized === Phrase.Dissonant
+                    if (p.finalized === dissonant
                             && melody.lastError.code === 0)  // NoError has code=0
                         melody.lastError = p.lastError
                 })
@@ -109,8 +114,8 @@ QtObject {
         for (var i = 0; i < phrases.length; i++) {
             (function(p) {
                 p.finalizedChanged.connect(function() {
-                    if (p.finalized === Phrase.None) return  // spurious signal guard (reset)
-                    if (p.finalized === Phrase.Dissonant) {
+                    if (p.finalized === None) return  // spurious signal guard (reset)
+                    if (p.finalized === dissonant) {
                         dissonantCount++
                         if (dissonantCount === total && melody.playing)
                             melody.finish(p.lastError)
@@ -128,7 +133,7 @@ QtObject {
         for (var i = 0; i < phrases.length; i++) {
             (function(p) {
                 p.finalizedChanged.connect(function() {
-                    if (p.finalized === Phrase.Consonant && melody.playing)
+                    if (p.finalized === consonant && melody.playing)
                         melody.finish()
                 })
             })(phrases[i])
