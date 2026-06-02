@@ -11,7 +11,7 @@ Melody {
             let current = phrases[i];
             if(i === 0) root.first = current
             let next = (i < phrases.length - 1) ? phrases[i + 1] : null;
-            current.abortOn = Qt.binding(() => root.state === Phrase.Resolved);
+            current.abortOn = Qt.binding(() => root.finalized === Phrase.Aborted);
             if (next !== null) {
                 // Chain to next on any resolution except Aborted; guard in case a
                 // policy resolved the melody before the callLater fires.
