@@ -212,7 +212,7 @@ private:
     Finalized m_finalized = None;
     bool      m_after     = false;
 
-    ErrorEntry m_lastError;
+    ErrorEntry m_lastError = NoError;
     ErrorEntry m_pendingFinishError; // stored by finish(), consumed by _finish_complete()
 
     QString m_title;
