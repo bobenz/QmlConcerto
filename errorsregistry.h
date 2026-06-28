@@ -5,7 +5,15 @@
 #include <QVariant>
 #include <QDebug>
 #include <QQmlPropertyMap>
-#include "qmlconcerto_global.h"
+#include <QtCore/qglobal.h>
+
+#ifndef QMLCONCERTO_EXPORT
+#  if defined(QMLCONCERTO_LIBRARY)
+#    define QMLCONCERTO_EXPORT Q_DECL_EXPORT
+#  else
+#    define QMLCONCERTO_EXPORT Q_DECL_IMPORT
+#  endif
+#endif
 
 struct ErrorEntryNoRegTag {};
 

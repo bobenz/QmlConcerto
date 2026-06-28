@@ -3,7 +3,6 @@
 #pragma once
 
 #include "phrase.h"
-#include "qmlconcerto_global.h"
 #include <QTimer>
 
 // ---------------------------------------------------------------------------

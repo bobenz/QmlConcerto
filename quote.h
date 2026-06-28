@@ -3,7 +3,6 @@
 #define QUOTE_H
 
 #include "phrase.h"
-#include "qmlconcerto_global.h"
 
 /**
  * @brief Quote — a transparent Phrase proxy that delegates its lifecycle to a

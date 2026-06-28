@@ -5,7 +5,6 @@
 #include <QObject>
 
 #include "errorsregistry.h"
-#include "qmlconcerto_global.h"
 #include <QDateTime>
 
 struct QMLCONCERTO_EXPORT Report {
