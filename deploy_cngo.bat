@@ -68,8 +68,14 @@ echo.
 :: ── 1. Plugin ─────────────────────────────────────────────────────────────
 if not exist "%CNGO%\Concerto" mkdir "%CNGO%\Concerto"
 
-copy /Y "%PLUGIN_DLL%"         "%CNGO%\Concerto\" >nul && echo [OK] Concerto\QmlConcerto.dll
-copy /Y "%PROJECT_DIR%\qmldir" "%CNGO%\Concerto\" >nul && echo [OK] Concerto\qmldir
+copy /Y "%PLUGIN_DLL%"                    "%CNGO%\Concerto\" >nul && echo [OK] Concerto\QmlConcerto.dll
+copy /Y "%PROJECT_DIR%\qmldir"            "%CNGO%\Concerto\" >nul && echo [OK] Concerto\qmldir
+copy /Y "%PROJECT_DIR%\Sequence.qml"      "%CNGO%\Concerto\" >nul && echo [OK] Concerto\Sequence.qml
+copy /Y "%PROJECT_DIR%\Chord.qml"         "%CNGO%\Concerto\" >nul && echo [OK] Concerto\Chord.qml
+copy /Y "%PROJECT_DIR%\Cadenza.qml"       "%CNGO%\Concerto\" >nul && echo [OK] Concerto\Cadenza.qml
+copy /Y "%PROJECT_DIR%\Reprisa.qml"       "%CNGO%\Concerto\" >nul && echo [OK] Concerto\Reprisa.qml
+copy /Y "%PROJECT_DIR%\Sonata.qml"        "%CNGO%\Concerto\" >nul && echo [OK] Concerto\Sonata.qml
+copy /Y "%PROJECT_DIR%\MelodyPolicies.qml" "%CNGO%\Concerto\" >nul && echo [OK] Concerto\MelodyPolicies.qml
 
 if "%PLUGIN_ONLY%"=="1" (
     echo [SKIP] windeployqt ^(plugin-only mode^)
