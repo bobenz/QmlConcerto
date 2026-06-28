@@ -5,9 +5,10 @@
 #include <QObject>
 
 #include "errorsregistry.h"
+#include "qmlconcerto_global.h"
 #include <QDateTime>
 
-struct Report {
+struct QMLCONCERTO_EXPORT Report {
     Q_GADGET
     Q_PROPERTY(QString source MEMBER source)
     Q_PROPERTY(QString category MEMBER category)
@@ -43,7 +44,7 @@ inline QDebug operator<<(QDebug debug, const Report &report)
     return debug;
 }
 
-class Phrase : public QObject
+class QMLCONCERTO_EXPORT Phrase : public QObject
 {
     Q_OBJECT
 

@@ -3,6 +3,7 @@
 #define QUOTE_H
 
 #include "phrase.h"
+#include "qmlconcerto_global.h"
 
 /**
  * @brief Quote — a transparent Phrase proxy that delegates its lifecycle to a
@@ -45,7 +46,7 @@
  * - report() signals from source are forwarded through Quote's own report()
  *   so they participate in the normal report-bubbling hierarchy.
  */
-class Quote : public Phrase
+class QMLCONCERTO_EXPORT Quote : public Phrase
 {
     Q_OBJECT
 

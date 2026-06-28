@@ -3,7 +3,7 @@
 #pragma once
 
 #include "phrase.h"
-
+#include "qmlconcerto_global.h"
 #include <QTimer>
 
 // ---------------------------------------------------------------------------
@@ -32,7 +32,7 @@
 //   • The timer is stopped in _abort() and _reset() to prevent stale callbacks.
 // ---------------------------------------------------------------------------
 
-class Pause : public Phrase
+class QMLCONCERTO_EXPORT Pause : public Phrase
 {
     Q_OBJECT
 

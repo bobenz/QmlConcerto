@@ -6,8 +6,9 @@
 #include <QQmlListProperty>
 #include <QQmlParserStatus>
 #include "phrase.h"
+#include "qmlconcerto_global.h"
 
-class Melody : public Phrase, public QQmlParserStatus
+class QMLCONCERTO_EXPORT Melody : public Phrase, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)

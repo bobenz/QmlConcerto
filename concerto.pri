@@ -7,6 +7,7 @@ INCLUDEPATH += $$PWD
 
 # Header files
 HEADERS += \
+    $$PWD/qmlconcerto_global.h \
     $$PWD/errorsregistry.h \
     $$PWD/melody.h \
     $$PWD/partitura.h \

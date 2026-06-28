@@ -4,12 +4,13 @@
 #include <QQmlPropertyMap>
 #include <QQmlEngine>
 #include <QRegularExpression>
+#include "qmlconcerto_global.h"
 
 /**
  * @brief The Partitura is the Score.
  * Inheriting from QQmlPropertyMap allows direct property access: Partitura.shortcutName
  */
-class Partitura : public QQmlPropertyMap
+class QMLCONCERTO_EXPORT Partitura : public QQmlPropertyMap
 {
     Q_OBJECT
 public:

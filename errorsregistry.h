@@ -5,6 +5,7 @@
 #include <QVariant>
 #include <QDebug>
 #include <QQmlPropertyMap>
+#include "qmlconcerto_global.h"
 
 struct ErrorEntryNoRegTag {};
 
@@ -31,7 +32,7 @@ struct ErrorKey
 
 // ── ErrorEntry ────────────────────────────────────────────────────────────────
 
-class ErrorEntry
+class QMLCONCERTO_EXPORT ErrorEntry
 {
     Q_GADGET
     Q_PROPERTY(QString  source      READ source)
@@ -100,7 +101,7 @@ inline bool operator!=(const ErrorEntry &lhs, const ErrorEntry &rhs)
 
 // ── ErrorRegistry ─────────────────────────────────────────────────────────────
 
-class ErrorRegistry : public QObject
+class QMLCONCERTO_EXPORT ErrorRegistry : public QObject
 {
     Q_OBJECT
 
