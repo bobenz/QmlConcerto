@@ -15,8 +15,7 @@ void ConcertoPlugin::registerTypes(const char *uri)
 {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("Concerto"));
 
-    qmlRegisterUncreatableType<Phrase>(uri, 1, 0, "Phrase",
-        QStringLiteral("Phrase is abstract — subclass it in C++ or use Melody/Sequence/Chord"));
+    qmlRegisterType<Phrase>(uri, 1, 0, "Phrase");
     qmlRegisterType<Melody>(uri, 1, 0, "Melody");
     qmlRegisterType<Pause> (uri, 1, 0, "Pause");
     qmlRegisterType<Quote> (uri, 1, 0, "Quote");

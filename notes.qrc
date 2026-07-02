@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/Concerto">
-        <file>qmldir</file>
         <file>Sequence.qml</file>
         <file>Chord.qml</file>
         <file>Cadenza.qml</file>
