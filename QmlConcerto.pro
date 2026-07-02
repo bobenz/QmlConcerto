@@ -13,8 +13,8 @@ win32:CONFIG(debug, debug|release): _DLL = $$shell_path($$PWD/lib/debug/$${TARGE
 else:                                _DLL = $$shell_path($$PWD/lib/release/$${TARGET}.dll)
 
 QMAKE_POST_LINK = cmd /c \
-    "copy /y $$shell_path($$_DLL) C:\CnGO\qml\Concerto\ \
-    && copy /y C:\CnGO\qml\Concerto\QmlConcerto.dll C:\CnGO\XfsEngine\\"
+    "copy /y $$shell_path($$_DLL) C:\CnGO\Concerto\ \
+    && copy /y C:\CnGO\Concerto\QmlConcerto.dll C:\CnGO\XfsEngine\\"
 
 # Export macro so all classes get Q_DECL_EXPORT when building the DLL
 DEFINES += QMLCONCERTO_LIBRARY
