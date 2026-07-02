@@ -13,8 +13,8 @@ else:                                DESTDIR = $$PWD/lib/release
 DLLDESTDIR = C:/CnGO/qml/Concerto
 
 # Also copy to XfsEngine so Windows finds it when loading xfsengine_*.dll
-QMAKE_POST_LINK += && $(COPY_FILE) \
-    $$shell_quote($$shell_path($$DLLDESTDIR/QmlConcerto.dll)) \
+QMAKE_POST_LINK = $(COPY_FILE) \
+    $$shell_quote($$shell_path($$DLLDESTDIR/$${TARGET}.dll)) \
     $$shell_quote($$shell_path(C:/CnGO/XfsEngine/))
 
 # Export macro so all classes get Q_DECL_EXPORT when building the DLL
