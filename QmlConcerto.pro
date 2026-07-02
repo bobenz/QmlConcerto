@@ -13,7 +13,9 @@ else:                                DESTDIR = $$PWD/lib/release
 DLLDESTDIR = C:/CnGO/qml/Concerto
 
 # Also copy to XfsEngine so Windows finds it when loading xfsengine_*.dll
-QMAKE_POST_LINK = $(COPY_FILE) \
+# Use += so this appends after DLLDESTDIR's own copy command.
+# $$escape_expand(\\n\\t) inserts a real newline+tab so jom sees two separate commands.
+QMAKE_POST_LINK += $$escape_expand(\\n\\t)$(COPY_FILE) \
     $$shell_quote($$shell_path($$DLLDESTDIR/$${TARGET}.dll)) \
     $$shell_quote($$shell_path(C:/CnGO/XfsEngine/))
 
