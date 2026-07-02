@@ -6,18 +6,15 @@ CONFIG  += plugin c++17
 win32:CONFIG(debug, debug|release): DESTDIR = $$PWD/lib/debug
 else:                                DESTDIR = $$PWD/lib/release
 
-# DLL — goes to C:/CnGO/qml/Concerto/ so the QML module is isolated
-# from XfsEngine plugins (both live under C:/CnGO but in separate subtrees).
-# qt.conf for the monolithic exe points to C:/CnGO/qml — finds Concerto only.
-# qt.conf for the ATM plugin host points to C:/CnGO — finds Concerto + XfsEngine.
-DLLDESTDIR = C:/CnGO/qml/Concerto
+# DLL destinations — both copies done in one cmd /c "... && ..." so order is guaranteed.
+# 1. build output  →  C:\CnGO\qml\Concerto\   (QML plugin location)
+# 2. qml\Concerto  →  C:\CnGO\XfsEngine\       (so Windows finds it via XfsEngine loader)
+win32:CONFIG(debug, debug|release): _DLL = $$shell_path($$PWD/lib/debug/$${TARGET}.dll)
+else:                                _DLL = $$shell_path($$PWD/lib/release/$${TARGET}.dll)
 
-# Also copy to XfsEngine so Windows finds it when loading xfsengine_*.dll
-# Use += so this appends after DLLDESTDIR's own copy command.
-# $$escape_expand(\\n\\t) inserts a real newline+tab so jom sees two separate commands.
-QMAKE_POST_LINK += $$escape_expand(\\n\\t)$(COPY_FILE) \
-    $$shell_quote($$shell_path($$DLLDESTDIR/$${TARGET}.dll)) \
-    $$shell_quote($$shell_path(C:/CnGO/XfsEngine/))
+QMAKE_POST_LINK = cmd /c \
+    "copy /y \"$$_DLL\" \"C:\CnGO\qml\Concerto\\\" \
+    && copy /y \"C:\CnGO\qml\Concerto\$${TARGET}.dll\" \"C:\CnGO\XfsEngine\\\""
 
 # Export macro so all classes get Q_DECL_EXPORT when building the DLL
 DEFINES += QMLCONCERTO_LIBRARY
