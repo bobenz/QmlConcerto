@@ -4,7 +4,7 @@
 #include <QQmlPropertyMap>
 #include <QQmlEngine>
 #include <QRegularExpression>
-#include "errorsregistry.h"
+#include "qmlconcerto_global.h"
 
 /**
  * @brief The Partitura is the Score.

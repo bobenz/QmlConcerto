@@ -5,6 +5,11 @@ CONFIG += c++17
 # Define the include path so the parent project can find headers easily
 INCLUDEPATH += $$PWD
 
+# RegRep supplies the generalized constants registry (ConstantEntry/ConstantRegistry)
+# and the reporting pipeline (Report/Reporter/ReportRouter/ReportsReceiver) — source-included
+# so its classes compile directly into whatever links this .pri.
+include($$PWD/../RegRep/regrep.pri)
+
 # Header files
 HEADERS += \
     $$PWD/errorsregistry.h \

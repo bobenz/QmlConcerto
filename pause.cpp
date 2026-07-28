@@ -1,9 +1,9 @@
 #include "pause.h"
 
 // ---------------------------------------------------------------------------
-// Static error — self-registers with ErrorRegistry on first use.
+// Static error — self-registers with ConstantRegistry on first use.
 // ---------------------------------------------------------------------------
-ErrorEntry Pause::ERR_PAUSE_TIMEOUT(
+ConstantEntry Pause::ERR_PAUSE_TIMEOUT(
     "pause_timeout",          // symbolic name  → Errors.pause_timeout
     "Pause",                  // source tag
     -9001,                    // error code

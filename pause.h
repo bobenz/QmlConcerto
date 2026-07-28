@@ -60,7 +60,7 @@ private:
     int    m_timeout { 0 };
     QTimer m_timer;
 
-    // Error declared once at class scope; self-registers with ErrorRegistry.
-    static ErrorEntry ERR_PAUSE_TIMEOUT;
+    // Error declared once at class scope; self-registers with ConstantRegistry.
+    static ConstantEntry ERR_PAUSE_TIMEOUT;
 };
 #endif // PAUSE_H

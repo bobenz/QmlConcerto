@@ -3,7 +3,8 @@
 #define CONCERTOPLUGIN_H
 
 #include <QQmlExtensionPlugin>
-#include "errorsregistry.h"
+#include "qmlconcerto_global.h"
+#include "constantsregistry.h"
 
 class QMLCONCERTO_EXPORT ConcertoPlugin : public QQmlExtensionPlugin
 {

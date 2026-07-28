@@ -4,8 +4,6 @@
 
 Phrase::Phrase(QObject *parent) : QObject(parent) {}
 
-#define REPORT(r)  qDebug() << r; emit report(r)
-
 // ── State / Finalized setters ─────────────────────────────────────────────────
 
 void Phrase::setState(State s)
@@ -66,7 +64,7 @@ void Phrase::accompany()
     setState(Accompanying);
 }
 
-void Phrase::finish(const ErrorEntry &error)
+void Phrase::finish(const ConstantEntry &error)
 {
     if (m_state != Playing && m_state != Accompanying) return;
 
@@ -112,7 +110,7 @@ void Phrase::_finish_complete()
     _finish_complete(m_pendingFinishError);
 }
 
-void Phrase::_finish_complete(const ErrorEntry &error)
+void Phrase::_finish_complete(const ConstantEntry &error)
 {
     if (m_state != Playing && m_state != Accompanying) {
         qWarning() << metaObject()->className()
@@ -164,33 +162,24 @@ bool Phrase::_reset()
 
 void Phrase::info(QString msg) const
 {
-    Report r = make_report();
-    r.category = Report::Category::Info;
-    r.message  = msg;
-    REPORT(r);
+    m_reporter.setSource(reportSource());
+    m_reporter.info(msg);
 }
 
 void Phrase::warning(QString msg) const
 {
-    Report r = make_report();
-    r.category = Report::Category::Warning;
-    r.message  = msg;
-    REPORT(r);
+    m_reporter.setSource(reportSource());
+    m_reporter.warning(msg);
 }
 
-void Phrase::error(ErrorEntry entry) const
+void Phrase::error(ConstantEntry entry) const
 {
-    Report r = make_report();
-    r.category = Report::Category::Error;
-    r.message  = entry.description();
-    r.data     = QVariant::fromValue(entry);
-    REPORT(r);
+    m_reporter.setSource(reportSource());
+    m_reporter.error(entry);
 }
 
 void Phrase::log_state()
 {
-    Report r = make_report();
-    r.category = Report::Category::Info;
     QList<QString> st;
     switch (m_state) {
     case Silent:      st << "Silent";      break;
@@ -208,26 +197,19 @@ void Phrase::log_state()
         break;
     default: break;
     }
-    r.message = st.join(" ");
-    r.data    = QVariant::fromValue(m_state);
-    REPORT(r);
+    m_reporter.setSource(reportSource());
+    m_reporter.info(st.join(" "), QVariant::fromValue(m_state));
 }
 
 void Phrase::log_signal(const QString &signalName, const QVariant &data)
 {
-    Report r = make_report();
-    r.category = Report::Category::Debug;
-    r.message  = QString("signal: %1").arg(signalName);
-    r.data     = data;
-    REPORT(r);
+    m_reporter.setSource(reportSource());
+    m_reporter.log(Report::Debug, QString("signal: %1").arg(signalName), data);
 }
 
-Report Phrase::make_report() const
+QString Phrase::reportSource() const
 {
-    Report r;
-    r.timestamp = QDateTime::currentDateTime();
-    r.source    = QString("%1/%2").arg(m_parentPath).arg(label());
-    return r;
+    return QString("%1/%2").arg(m_parentPath).arg(label());
 }
 
 // ── Property accessors ────────────────────────────────────────────────────────
@@ -243,9 +225,9 @@ void Phrase::setAfter(bool newAfter)
     emit afterChanged();
 }
 
-ErrorEntry Phrase::lastError() const { return m_lastError; }
+ConstantEntry Phrase::lastError() const { return m_lastError; }
 
-void Phrase::setLastError(const ErrorEntry &newLastError)
+void Phrase::setLastError(const ConstantEntry &newLastError)
 {
     if (m_lastError == newLastError) return;
     m_lastError = newLastError;

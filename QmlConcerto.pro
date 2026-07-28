@@ -19,6 +19,10 @@ QMAKE_POST_LINK = cmd /c \
 # Export macro so all classes get Q_DECL_EXPORT when building the DLL
 DEFINES += QMLCONCERTO_LIBRARY
 
+# RegRep is source-included (see concerto.pri) and compiled directly into this DLL,
+# so its own export macro needs to resolve to Q_DECL_EXPORT here too.
+DEFINES += REGREP_LIBRARY
+
 # Shared module sources, headers, and resources
 include(concerto.pri)
 

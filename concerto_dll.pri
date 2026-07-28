@@ -1,7 +1,7 @@
 QT      += quick qml
 CONFIG  += c++17
 INCLUDEPATH += $$PWD
-DEFINES     += "CONCERTO_HOME=\\\"$$PWD\\\"" QMLCONCERTO_DLL
+DEFINES     += "CONCERTO_HOME=\\\"$$PWD\\\"" QMLCONCERTO_DLL REGREP_DLL
 
 # Link against the import lib in the source-relative lib/ folder.
 # Build QmlConcerto first so lib/debug or lib/release is populated.

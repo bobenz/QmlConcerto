@@ -4,44 +4,10 @@
 
 #include <QObject>
 
-#include "errorsregistry.h"
+#include "qmlconcerto_global.h"
+#include "constantsregistry.h"
+#include "reporter.h"
 #include <QDateTime>
-
-struct QMLCONCERTO_EXPORT Report {
-    Q_GADGET
-    Q_PROPERTY(QString source MEMBER source)
-    Q_PROPERTY(QString category MEMBER category)
-    Q_PROPERTY(QString message MEMBER message)
-    Q_PROPERTY(QVariant data MEMBER data)
-    Q_PROPERTY(QDateTime timestamp MEMBER timestamp)
-public:
-    enum Category {
-        Info,
-        Warning,
-        Error,
-        Debug,
-        Critical
-    };
-    Q_ENUM(Category)
-    QString source;
-    QString category;
-    QString message;
-    QVariant data;
-    QDateTime timestamp;
-};
-
-inline QDebug operator<<(QDebug debug, const Report &report)
-{
-    QDebugStateSaver saver(debug);
-    debug.nospace() << "Report("
-                    << "Source: "    << report.source
-                    << ", Category: " << report.category
-                    << ", Message: "  << report.message
-                    << ", Data: "     << report.data
-                    << ", Time: "     << report.timestamp.toString(Qt::ISODateWithMs)
-                    << ")";
-    return debug;
-}
 
 class QMLCONCERTO_EXPORT Phrase : public QObject
 {
@@ -50,7 +16,7 @@ class QMLCONCERTO_EXPORT Phrase : public QObject
     Q_PROPERTY(State     state     READ state     NOTIFY stateChanged     FINAL)
     Q_PROPERTY(Finalized finalized READ finalized NOTIFY finalizedChanged FINAL)
     Q_PROPERTY(bool after READ after WRITE setAfter NOTIFY afterChanged FINAL)
-    Q_PROPERTY(ErrorEntry lastError READ lastError WRITE setLastError NOTIFY lastErrorChanged FINAL)
+    Q_PROPERTY(ConstantEntry lastError READ lastError WRITE setLastError NOTIFY lastErrorChanged FINAL)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged FINAL)
     Q_PROPERTY(QString lyric READ lyric WRITE setLyric NOTIFY lyricChanged FINAL)
     Q_PROPERTY(bool abortOn      READ abortOn      WRITE setAbortOn      NOTIFY abortOnChanged      FINAL)
@@ -91,8 +57,8 @@ public:
     bool after() const;
     void setAfter(bool newAfter);
 
-    ErrorEntry lastError() const;
-    void setLastError(const ErrorEntry &newLastError);
+    ConstantEntry lastError() const;
+    void setLastError(const ConstantEntry &newLastError);
 
     QString title() const;
     void setTitle(const QString &newTitle);
@@ -120,7 +86,7 @@ public:
 
 public slots:
     bool play();
-    void finish(const ErrorEntry &error = NoError);
+    void finish(const ConstantEntry &error = NoError);
     void abort();
     void reset();
     void accompany();
@@ -128,7 +94,7 @@ public slots:
     // logging
     void info(QString msg) const;
     void warning(QString msg) const;
-    void error(ErrorEntry) const;
+    void error(ConstantEntry) const;
 
 signals:
     void stateChanged();
@@ -143,7 +109,6 @@ signals:
     void lastErrorChanged();
     void titleChanged();
     void lyricChanged();
-    void report(Report) const;
     void abortOnChanged();
     void abortOnBoundChanged();
     void finishOnChanged();
@@ -196,24 +161,24 @@ protected:
     // Call with an explicit error to override, or with no argument to use the
     // error that was passed to finish() (stored in m_pendingFinishError).
     void _finish_complete();
-    void _finish_complete(const ErrorEntry &error);
+    void _finish_complete(const ConstantEntry &error);
 
     // Completes a reset: emits cleanup(), clears lastError, sets Silent.
     void _reset_complete();
 
     // -----------------------------------------------------------------------
     void log_signal(const QString &signalName, const QVariant &data = QVariant());
-    Report make_report() const;
 
 private:
     void log_state();
+    QString reportSource() const;
 
     State     m_state     = Silent;
     Finalized m_finalized = None;
     bool      m_after     = false;
 
-    ErrorEntry m_lastError = NoError;
-    ErrorEntry m_pendingFinishError; // stored by finish(), consumed by _finish_complete()
+    ConstantEntry m_lastError = NoError;
+    ConstantEntry m_pendingFinishError; // stored by finish(), consumed by _finish_complete()
 
     QString m_title;
     QString m_lyric;
@@ -223,6 +188,8 @@ private:
     {
         return m_title.isEmpty() ? QLatin1String(metaObject()->className()) : m_title;
     }
+
+    mutable Reporter m_reporter;
 
     bool m_abortOn        = false;
     bool m_abortOnBound   = false;

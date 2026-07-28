@@ -84,13 +84,13 @@ void Melody::append(QQmlListProperty<Phrase> *list, Phrase *phrase)
     }
 }
 
-int Melody::count(QQmlListProperty<Phrase> *list)
+qsizetype Melody::count(QQmlListProperty<Phrase> *list)
 {
     auto *self = qobject_cast<Melody *>(list->object);
     return self ? self->m_phrases.count() : 0;
 }
 
-Phrase* Melody::at(QQmlListProperty<Phrase> *list, int index)
+Phrase* Melody::at(QQmlListProperty<Phrase> *list, qsizetype index)
 {
     auto *self = qobject_cast<Melody *>(list->object);
     return (self && index >= 0 && index < self->m_phrases.count())

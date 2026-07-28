@@ -42,8 +42,10 @@
  *   Dissonant with an internal "null source" error.
  * - Changing source while Playing is a no-op (logged as a warning).
  * - reset() resets both Quote and source.
- * - report() signals from source are forwarded through Quote's own report()
- *   so they participate in the normal report-bubbling hierarchy.
+ * - Reports (info()/warning()/error()) are published straight to the global
+ *   ReportRouter with the emitting Phrase's own source path — Quote does not
+ *   forward or re-emit them. A ReportsReceiver that wants to observe reports
+ *   from whatever a Quote wraps should filter on the wrapped source's path.
  */
 class QMLCONCERTO_EXPORT Quote : public Phrase
 {
@@ -77,7 +79,6 @@ private:
 
     Phrase  *m_source     = nullptr;
     QMetaObject::Connection m_connState;
-    QMetaObject::Connection m_connReport;
     QMetaObject::Connection m_connError;
       QMetaObject::Connection m_connFin;
 };

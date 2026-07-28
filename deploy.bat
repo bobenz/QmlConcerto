@@ -92,6 +92,14 @@ for %%H in (%PUBLIC_HEADERS%) do (
     echo [OK] include\%%H
 )
 
+:: RegRep headers — sibling project, source-included into QmlConcerto (see concerto.pri)
+set REGREP_DIR=%PROJECT_DIR%\..\RegRep
+set REGREP_HEADERS=regrep_global.h constantsregistry.h report.h reportrouter.h reportsreceiver.h reporter.h
+for %%H in (%REGREP_HEADERS%) do (
+    copy /Y "%REGREP_DIR%\%%H" "%INCLUDE_OUT%\" >nul
+    echo [OK] include\%%H
+)
+
 :: Also copy the import lib so linkers can resolve DLL symbols
 set IMPORT_LIB=%BUILD_DIR%\QmlConcerto.lib
 if exist "%IMPORT_LIB%" (

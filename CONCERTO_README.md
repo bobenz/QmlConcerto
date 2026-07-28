@@ -14,12 +14,18 @@ QmlConcerto models multi-step operations as musical phrases that can be played, 
      └── Melody  (container)  ──────► Sequence.qml  (serial execution)
                                        Chord.qml     (parallel execution)
 
-   ErrorEntry  (Q_GADGET value type)
-   ErrorRegistry  (singleton QObject) ──► "ErrorRegistry" context property
-   QQmlPropertyMap  ─────────────────►  "Errors" context property
+   ConstantEntry / ConstantRegistry   ──► "ErrorRegistry" context property
+     (from RegRep, sibling project)       "Errors" context property (QQmlPropertyMap)
 
-   Report  (Q_GADGET value type)
+   Report / Reporter / ReportRouter / ReportsReceiver   (from RegRep)
 ```
+
+`ErrorEntry`/`ErrorRegistry` and the error-reporting pipeline are no longer implemented locally — they come
+from [RegRep](../RegRep), a sibling project, source-included via `concerto.pri`. The QML-facing names
+(`Errors`, `ErrorRegistry`) are unchanged, and `errorsregistry.h` still exists as a thin compat shim
+(`using ErrorEntry = ConstantEntry; using ErrorRegistry = ConstantRegistry;`) — existing C++ code such as
+service-specific `xfserrors_*.h` files that `#include "errorsregistry.h"` and declare
+`static ErrorEntry foo{...}` keeps compiling unchanged.
 
 | Layer | Responsibility |
 |-------|---------------|
@@ -200,7 +206,7 @@ QmlConcerto/
 ├── main.qml                 # Application window
 ├── phrase.h / phrase.cpp    # Phrase — abstract base class for all executable units
 ├── melody.h / melody.cpp    # Melody — container Phrase with child phrases
-├── errorsregistry.h         # ErrorEntry (value type) + ErrorRegistry (singleton)
+├── errorsregistry.h         # Compat shim: ErrorEntry/ErrorRegistry = aliases for RegRep's ConstantEntry/ConstantRegistry
 ├── Sequence.qml             # Serial execution (Melody subclass)
 ├── Chord.qml                # Parallel execution (Melody subclass)
 ├── notes.qrc                # QML resources (Sequence.qml, Chord.qml)
@@ -209,6 +215,9 @@ QmlConcerto/
 ├── MANUAL.md                # Full API reference and developer manual
 └── .gitignore
 ```
+
+`concerto.pri` also pulls in `../RegRep/regrep.pri` (sibling project) for `ConstantEntry`/`ConstantRegistry`
+and the reporting pipeline — see [RegRep's CLAUDE.md](../RegRep/CLAUDE.md).
 
 ## Adding a Custom Phrase
 
@@ -239,11 +248,13 @@ ErrorRegistry.declare({
 
 ## Logging
 
-Every `Phrase` emits structured `Report` signals through its lifecycle:
+Every `Phrase` publishes structured `Report`s through its lifecycle via an owned RegRep `Reporter`. Observe
+them with a `ReportsReceiver`, filtered by regex on `sourceFilter`/`categoryFilter`/`messageFilter`:
 
 ```qml
-Sequence {
-    onReport: function(r) {
+ReportsReceiver {
+    categoryFilter: "Error|Critical"
+    onReportReceived: function(r) {
         console.log(r.timestamp, r.source, r.category, r.message)
     }
 }

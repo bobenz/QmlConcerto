@@ -47,10 +47,10 @@ protected:
 private:
     QJSValue m_activePolicies;
     // QQmlListProperty callbacks
-    static void    append(QQmlListProperty<Phrase> *list, Phrase *phrase);
-    static int     count (QQmlListProperty<Phrase> *list);
-    static Phrase* at    (QQmlListProperty<Phrase> *list, int index);
-    static void    clear (QQmlListProperty<Phrase> *list);
+    static void      append(QQmlListProperty<Phrase> *list, Phrase *phrase);
+    static qsizetype count (QQmlListProperty<Phrase> *list);
+    static Phrase*   at    (QQmlListProperty<Phrase> *list, qsizetype index);
+    static void      clear (QQmlListProperty<Phrase> *list);
 };
 
 #endif // MELODY_H

@@ -67,12 +67,18 @@ workflow — however deeply nested — exposes a uniform lifecycle interface.
                                   Reprisa.qml   (loop until finishOn)
                                   Sonata.qml    (preludio → aria → coda)
 
-   ErrorEntry  (value type)
-   ErrorRegistry  (singleton) ──► "ErrorRegistry" context property
-   QQmlPropertyMap  ──────────►  "Errors"        context property
+   ConstantEntry / ConstantRegistry   ──► "ErrorRegistry" context property
+     (from RegRep, sibling project)       "Errors"        context property (QQmlPropertyMap)
 
-   Report  (value type — structured log event)
+   Report / Reporter / ReportRouter / ReportsReceiver   (from RegRep)
 ```
+
+`ErrorEntry`/`ErrorRegistry` and the reporting pipeline are implemented by
+[RegRep](../RegRep), a sibling project, source-included via `concerto.pri`. The QML-facing names (`Errors`,
+`ErrorRegistry`) are unchanged from earlier versions of this manual — only the underlying C++ types moved.
+`errorsregistry.h` still exists as a compat shim (`using ErrorEntry = ConstantEntry; using ErrorRegistry =
+ConstantRegistry;`) so existing C++ headers that declare `static ErrorEntry foo{...}` (e.g. service-specific
+`xfserrors_*.h` files) keep compiling unchanged.
 
 ### Two-layer design
 
@@ -517,7 +523,8 @@ Quote {
 
 ### 4.6 ErrorEntry
 
-Value type representing a single error definition.
+Value type representing a single error definition. Implemented by RegRep's `ConstantEntry` — a generalized
+named-constant type (errors are just the entries with `type == "error"`, which is the default).
 
 #### QML-exposed properties
 
@@ -526,8 +533,10 @@ Value type representing a single error definition.
 | `source` | `QString` | Module identifier (e.g. `"APP"`, `"CDM"`) |
 | `code` | `int` | Numeric error code |
 | `description` | `QString` | Human-readable message |
+| `type` | `QString` | Constant kind — always `"error"` for entries registered through this API |
+| `data` | `QVariant` | Optional free-form payload attached at registration time |
 | `valid` | `bool` | `true` if the entry has a non-empty name |
-| `text` | `QString` | Formatted: `"[source] (code) description"` |
+| `text` | `QString` | Formatted: `"[type/source] (code) description"` |
 
 #### Built-in sentinel
 
@@ -537,7 +546,9 @@ Value type representing a single error definition.
 
 ### 4.7 ErrorRegistry
 
-Global singleton for error lookup and registration.
+Global singleton for error lookup and registration. Implemented by RegRep's `ConstantRegistry`, keyed by
+`(type, code, source)` — the methods below all operate with `type` implicitly `"error"` since that's what
+this API registers.
 
 **QML context properties:**
 
@@ -1584,17 +1595,20 @@ There is no early-exit — all parallel branches always run to completion.
 
 ## 9. Logging and Reporting
 
-Every `Phrase` emits structured `Report` signals through its lifecycle. Reports
-bubble up through the hierarchy, so connecting to a `Sequence` or top-level
-`Melody` captures all log events from every descendant.
+Every `Phrase` publishes structured `Report`s through its lifecycle via an owned `Reporter` instance (from
+[RegRep](../RegRep)). Reports are **not** emitted as a per-object signal and do not bubble through the
+`Sequence`/`Melody` hierarchy — each `Phrase` publishes directly to a single global `ReportRouter`, tagged
+with its own source path. Observe them anywhere with a `ReportsReceiver`, filtered by regex on
+`sourceFilter`/`categoryFilter`/`messageFilter` (all optional, combined with AND; omit a filter to match
+everything on that field).
 
-### Connecting the `report` signal in QML
+### Observing reports with `ReportsReceiver`
 
 ```qml
-Sequence {
-    id: flow
+ReportsReceiver {
+    categoryFilter: "Error|Critical"
 
-    onReport: function(r) {
+    onReportReceived: function(r) {
         logModel.append({
             time:    Qt.formatTime(r.timestamp, "hh:mm:ss.zzz"),
             source:  r.source,
@@ -1602,7 +1616,10 @@ Sequence {
             message: r.message
         })
     }
+}
 
+Sequence {
+    id: flow
     StepA { }
     StepB { }
 }

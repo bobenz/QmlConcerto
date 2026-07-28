@@ -61,11 +61,6 @@ void Quote::wireSource(Phrase *src)
 
     m_connFin = connect(src, &Phrase::finalizedChanged,
                         this, &Quote::onSourceFinalizedChanged);
-
-    // Forward all source reports through Quote's report signal so they
-    // participate in the normal report-bubbling hierarchy.
-    m_connReport = connect(src, &Phrase::report,
-                           this, &Quote::report);
 }
 
 void Quote::unwireSource(Phrase *src)
@@ -74,11 +69,9 @@ void Quote::unwireSource(Phrase *src)
         return;
 
     disconnect(m_connState);
-    disconnect(m_connReport);
     disconnect(m_connError);
 
     m_connState  = {};
-    m_connReport = {};
     m_connError  = {};
 }
 
@@ -91,7 +84,7 @@ bool Quote::_play()
     if (!m_source) {
         // No source — resolve immediately as Dissonant.
         warning("Quote has no source — resolving Dissonant");
-        ErrorEntry nullErr;
+        ConstantEntry nullErr;
         finish(nullErr);
         return false;
     }
