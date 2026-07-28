@@ -26,11 +26,6 @@ void ConcertoPlugin::registerTypes(const char *uri)
     qRegisterMetaType<ConstantEntry>("ConstantEntry");
     qRegisterMetaType<Report>("Report");
 
-    // Lowercase name: Report is a Q_GADGET/value type, and Qt6's QML type
-    // system expects value types to use a lowercase name (like "point", "rect").
-    qmlRegisterUncreatableType<Report>(uri, 1, 0, "report",
-        QStringLiteral("Report is a value type — read it from ReportsReceiver.onReportReceived"));
-
     qmlRegisterSingletonType<Partitura>(uri, 1, 0, "Partitura", partitura_provider);
 
     qmlRegisterSingletonType(QUrl(QStringLiteral("qrc:/Concerto/MelodyPolicies.qml")),

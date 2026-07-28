@@ -33,11 +33,6 @@ public:
         qRegisterMetaType<ConstantEntry>("ConstantEntry");
         qRegisterMetaType<Report>("Report");
 
-        // Lowercase name: Report is a Q_GADGET/value type, and Qt6's QML type
-        // system expects value types to use a lowercase name (like "point", "rect").
-        qmlRegisterUncreatableType<Report>(uri, major, minor, "report",
-            QStringLiteral("Report is a value type — read it from ReportsReceiver.onReportReceived"));
-
         // 2. Expose the Registry itself to call functions like lookup() or declare()
         // Names kept as "ErrorRegistry"/"Errors" for backward compatibility — now
         // backed by RegRep's generalized ConstantRegistry.
