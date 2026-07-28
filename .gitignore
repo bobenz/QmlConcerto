@@ -2,6 +2,7 @@
 *.slo
 *.lo
 *.o
+*.obj
 *.a
 *.la
 *.lai
@@ -18,8 +19,8 @@
 object_script.*.Release
 object_script.*.Debug
 *_plugin_import.cpp
-/.qmake.cache
-/.qmake.stash
+.qmake.cache
+.qmake.stash
 *.pro.user
 *.pro.user.*
 *.qbs.user
@@ -35,6 +36,8 @@ Makefile*
 *build-*
 *build/*
 lib/*
+release/
+debug/
 *.qm
 *.prl
 
