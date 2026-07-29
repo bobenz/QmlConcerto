@@ -5,7 +5,18 @@
 #include <QObject>
 #include <QQmlListProperty>
 #include <QQmlParserStatus>
+#include <QtGlobal>
 #include "phrase.h"
+
+// QQmlListProperty's count()/at() callbacks take/return qsizetype in Qt6 and
+// plain int in Qt5 — using the wrong one is a hard compile error (incompatible
+// function pointer types when constructing the QQmlListProperty), not just a
+// warning, so this can't be papered over with an implicit conversion.
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+using PhraseListSize = qsizetype;
+#else
+using PhraseListSize = int;
+#endif
 
 class QMLCONCERTO_EXPORT Melody : public Phrase, public QQmlParserStatus
 {
@@ -47,10 +58,10 @@ protected:
 private:
     QJSValue m_activePolicies;
     // QQmlListProperty callbacks
-    static void      append(QQmlListProperty<Phrase> *list, Phrase *phrase);
-    static qsizetype count (QQmlListProperty<Phrase> *list);
-    static Phrase*   at    (QQmlListProperty<Phrase> *list, qsizetype index);
-    static void      clear (QQmlListProperty<Phrase> *list);
+    static void           append(QQmlListProperty<Phrase> *list, Phrase *phrase);
+    static PhraseListSize count (QQmlListProperty<Phrase> *list);
+    static Phrase*        at    (QQmlListProperty<Phrase> *list, PhraseListSize index);
+    static void           clear (QQmlListProperty<Phrase> *list);
 };
 
 #endif // MELODY_H
