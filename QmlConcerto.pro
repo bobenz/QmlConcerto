@@ -13,18 +13,25 @@ else:                                DESTDIR = $$PWD/lib/release
 # regardless of CNGO_DIR — see deploy.pri below for the real, consolidated deploy tree.
 win32:CONFIG(debug, debug|release) {
     _DLL = $$shell_path($$PWD/lib/debug/$${TARGET}.dll)
+    _LIB = $$shell_path($$PWD/lib/debug/$${TARGET}.lib)
     _REGREP_DLL = $$shell_path($$PWD/../RegRep/lib/debug/RegRep.dll)
+    _REGREP_LIB = $$shell_path($$PWD/../RegRep/lib/debug/RegRep.lib)
 } else {
     _DLL = $$shell_path($$PWD/lib/release/$${TARGET}.dll)
+    _LIB = $$shell_path($$PWD/lib/release/$${TARGET}.lib)
     _REGREP_DLL = $$shell_path($$PWD/../RegRep/lib/release/RegRep.dll)
+    _REGREP_LIB = $$shell_path($$PWD/../RegRep/lib/release/RegRep.lib)
 }
 
-# Deploy: QmlConcerto.dll + RegRep.dll -> $$DEPLOY_LIB_DIR (every plugin DLL, one
-# place). RegRep.dll is already sitting in local lib/... thanks to regrep_dll.pri's
-# own copy-to-DESTDIR. Both DLL copies (XfsEngine + the deploy tree) MUST be
-# QMAKE_POST_LINK, not COPIES — COPIES treats its .files as static pre-existing
-# sources, and pointing it at this project's own just-built DLL creates a
-# dependency cycle ("cycle in dependency tree for target ...dll").
+# Deploy: QmlConcerto.dll/.lib + RegRep.dll/.lib -> $$DEPLOY_LIB_DIR (every plugin's
+# DLL and import lib, one place — concerto_dll.pri/regrep_dll.pri link consumers
+# against the .lib found there). RegRep's own artifacts are already sitting in
+# local lib/... thanks to regrep_dll.pri's/RegRep.pro's own copy-to-DESTDIR; copying
+# them again here too is defensive in case only QmlConcerto gets rebuilt. All these
+# copies (XfsEngine + the deploy tree) MUST be QMAKE_POST_LINK, not COPIES — COPIES
+# treats its .files as static pre-existing sources, and pointing it at this
+# project's own just-built DLL creates a dependency cycle ("cycle in dependency
+# tree for target ...dll").
 include(deploy.pri)
 
 QMAKE_POST_LINK = cmd /c \
@@ -32,7 +39,9 @@ QMAKE_POST_LINK = cmd /c \
     && copy /y $$_REGREP_DLL C:\CnGO\XfsEngine\ \
     && (if not exist $$shell_path($$DEPLOY_LIB_DIR) mkdir $$shell_path($$DEPLOY_LIB_DIR)) \
     && copy /y $$shell_path($$_DLL) $$shell_path($$DEPLOY_LIB_DIR) \
-    && copy /y $$_REGREP_DLL $$shell_path($$DEPLOY_LIB_DIR)\\"
+    && copy /y $$_REGREP_DLL $$shell_path($$DEPLOY_LIB_DIR) \
+    && copy /y $$shell_path($$_LIB) $$shell_path($$DEPLOY_LIB_DIR) \
+    && copy /y $$_REGREP_LIB $$shell_path($$DEPLOY_LIB_DIR)\\"
 
 # Export macro so all classes get Q_DECL_EXPORT when building the DLL
 DEFINES += QMLCONCERTO_LIBRARY
