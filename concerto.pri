@@ -6,9 +6,11 @@ CONFIG += c++17
 INCLUDEPATH += $$PWD
 
 # RegRep supplies the generalized constants registry (ConstantEntry/ConstantRegistry)
-# and the reporting pipeline (Report/Reporter/ReportRouter/ReportsReceiver) — source-included
-# so its classes compile directly into whatever links this .pri.
-include($$PWD/../RegRep/regrep.pri)
+# and the reporting pipeline (Report/Reporter/ReportRouter/ReportsReceiver) — linked as a
+# shared library (build RegRep.pro first) rather than source-included, so ConstantRegistry/
+# ReportRouter are guaranteed to be true process-wide singletons even if more than one
+# consumer of this .pri ends up loaded in the same process.
+include($$PWD/../RegRep/regrep_dll.pri)
 
 # Header files
 HEADERS += \

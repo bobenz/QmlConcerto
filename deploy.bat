@@ -17,6 +17,7 @@ setlocal EnableDelayedExpansion
 ::   deploy\
 ::     Concerto\
 ::       QmlConcerto.dll    <- plugin
+::       RegRep.dll         <- runtime dependency (linked, not source-included)
 ::       qmldir             <- QML module descriptor
 ::     qt\                  <- Qt runtime DLLs (symlinked or copied from ..\qt)
 ::       Qt5Core.dll
@@ -65,6 +66,16 @@ if not exist "%PLUGIN_DLL%" (
     exit /b 1
 )
 
+:: RegRep.dll is a runtime dependency now (linked, not source-included — see concerto.pri)
+set REGREP_DLL=%PROJECT_DIR%\..\RegRep\lib\%CONFIG%\RegRep.dll
+if /I "%CONFIG%"=="Release" set REGREP_DLL=%PROJECT_DIR%\..\RegRep\lib\release\RegRep.dll
+if /I "%CONFIG%"=="Debug"   set REGREP_DLL=%PROJECT_DIR%\..\RegRep\lib\debug\RegRep.dll
+if not exist "%REGREP_DLL%" (
+    echo [ERROR] RegRep.dll not found: %REGREP_DLL%
+    echo   Build ..\RegRep\RegRep.pro first.
+    exit /b 1
+)
+
 echo.
 echo === QmlConcerto deploy ===
 echo   Config   : %CONFIG%
@@ -78,8 +89,10 @@ set CONCERTO_OUT=%DEPLOY_DIR%\Concerto
 if not exist "%CONCERTO_OUT%" mkdir "%CONCERTO_OUT%"
 
 copy /Y "%PLUGIN_DLL%"          "%CONCERTO_OUT%\" >nul
+copy /Y "%REGREP_DLL%"          "%CONCERTO_OUT%\" >nul
 copy /Y "%PROJECT_DIR%\qmldir"  "%CONCERTO_OUT%\" >nul
 echo [OK] Concerto\QmlConcerto.dll
+echo [OK] Concerto\RegRep.dll
 echo [OK] Concerto\qmldir
 
 :: ── 2. Public headers ────────────────────────────────────────────────────────
@@ -92,7 +105,7 @@ for %%H in (%PUBLIC_HEADERS%) do (
     echo [OK] include\%%H
 )
 
-:: RegRep headers — sibling project, source-included into QmlConcerto (see concerto.pri)
+:: RegRep headers — sibling project, linked (not source-included) into QmlConcerto (see concerto.pri)
 set REGREP_DIR=%PROJECT_DIR%\..\RegRep
 set REGREP_HEADERS=regrep_global.h constantsregistry.h report.h reportrouter.h reportsreceiver.h reporter.h
 for %%H in (%REGREP_HEADERS%) do (
@@ -100,13 +113,23 @@ for %%H in (%REGREP_HEADERS%) do (
     echo [OK] include\%%H
 )
 
-:: Also copy the import lib so linkers can resolve DLL symbols
+:: Also copy the import libs so linkers can resolve DLL symbols
 set IMPORT_LIB=%BUILD_DIR%\QmlConcerto.lib
 if exist "%IMPORT_LIB%" (
     copy /Y "%IMPORT_LIB%" "%INCLUDE_OUT%\" >nul
     echo [OK] include\QmlConcerto.lib
 ) else (
     echo [WARN] include\QmlConcerto.lib not found — build first
+)
+
+set REGREP_LIB=%REGREP_DIR%\lib\%CONFIG%\RegRep.lib
+if /I "%CONFIG%"=="Release" set REGREP_LIB=%REGREP_DIR%\lib\release\RegRep.lib
+if /I "%CONFIG%"=="Debug"   set REGREP_LIB=%REGREP_DIR%\lib\debug\RegRep.lib
+if exist "%REGREP_LIB%" (
+    copy /Y "%REGREP_LIB%" "%INCLUDE_OUT%\" >nul
+    echo [OK] include\RegRep.lib
+) else (
+    echo [WARN] include\RegRep.lib not found — build RegRep.pro first
 )
 
 :: ── 3. Qt runtime DLLs ───────────────────────────────────────────────────────
@@ -164,6 +187,6 @@ echo   2. Add deploy\qt to your PATH (or place DLLs alongside your exe).
 echo   3. Place deploy\platforms\ alongside your exe.
 echo   4. C++ inheritance — in consumer.pro:
 echo        INCLUDEPATH += path/to/deploy/include
-echo        LIBS        += -Lpath/to/deploy/include -lQmlConcerto
+echo        LIBS        += -Lpath/to/deploy/include -lQmlConcerto -lRegRep
 echo.
 endlocal

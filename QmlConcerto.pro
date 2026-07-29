@@ -9,19 +9,24 @@ else:                                DESTDIR = $$PWD/lib/release
 # DLL destinations — both copies done in one cmd /c "... && ..." so order is guaranteed.
 # 1. build output  →  C:\CnGO\qml\Concerto\   (QML plugin location)
 # 2. qml\Concerto  →  C:\CnGO\XfsEngine\       (so Windows finds it via XfsEngine loader)
-win32:CONFIG(debug, debug|release): _DLL = $$shell_path($$PWD/lib/debug/$${TARGET}.dll)
-else:                                _DLL = $$shell_path($$PWD/lib/release/$${TARGET}.dll)
+# RegRep.dll is a runtime dependency now (linked, not source-included — see concerto.pri)
+# so it needs to travel to both destinations alongside QmlConcerto.dll.
+win32:CONFIG(debug, debug|release) {
+    _DLL = $$shell_path($$PWD/lib/debug/$${TARGET}.dll)
+    _REGREP_DLL = $$shell_path($$PWD/../RegRep/lib/debug/RegRep.dll)
+} else {
+    _DLL = $$shell_path($$PWD/lib/release/$${TARGET}.dll)
+    _REGREP_DLL = $$shell_path($$PWD/../RegRep/lib/release/RegRep.dll)
+}
 
 QMAKE_POST_LINK = cmd /c \
     "copy /y $$shell_path($$_DLL) C:\CnGO\Concerto\ \
-    && copy /y C:\CnGO\Concerto\QmlConcerto.dll C:\CnGO\XfsEngine\\"
+    && copy /y $$_REGREP_DLL C:\CnGO\Concerto\ \
+    && copy /y C:\CnGO\Concerto\QmlConcerto.dll C:\CnGO\XfsEngine\ \
+    && copy /y C:\CnGO\Concerto\RegRep.dll C:\CnGO\XfsEngine\\"
 
 # Export macro so all classes get Q_DECL_EXPORT when building the DLL
 DEFINES += QMLCONCERTO_LIBRARY
-
-# RegRep is source-included (see concerto.pri) and compiled directly into this DLL,
-# so its own export macro needs to resolve to Q_DECL_EXPORT here too.
-DEFINES += REGREP_LIBRARY
 
 # Shared module sources, headers, and resources
 include(concerto.pri)
