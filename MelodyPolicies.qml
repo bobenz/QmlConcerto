@@ -114,7 +114,7 @@ QtObject {
         for (var i = 0; i < phrases.length; i++) {
             (function(p) {
                 p.finalizedChanged.connect(function() {
-                    if (p.finalized === None) return  // spurious signal guard (reset)
+                    if (p.finalized === none) return  // spurious signal guard (reset)
                     if (p.finalized === dissonant) {
                         dissonantCount++
                         if (dissonantCount === total && melody.playing)

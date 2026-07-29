@@ -40,6 +40,18 @@ public:
         qmlRegisterSingletonType<Partitura>("Concerto", 1, 0, "Partitura", partitura_provider);
         qmlRegisterSingletonType(QUrl("qrc:/Concerto/MelodyPolicies.qml"),
                                  "Concerto", 1, 0, "MelodyPolicies");
+
+        // QML-composition types (Sequence/Chord/...) — registered directly by URL rather
+        // than relying on qmldir-based directory resolution, which never actually worked
+        // for source-included consumers (addImportPath("qrc:/Concerto") + addImportPath
+        // (CONCERTO_HOME) both point one directory level off from where a "Concerto"-named
+        // qmldir would need to sit, so `import Concerto 1.0` could never resolve these
+        // through it — this is the same mechanism MelodyPolicies above already uses).
+        qmlRegisterType(QUrl("qrc:/Concerto/Sequence.qml"), uri, major, minor, "Sequence");
+        qmlRegisterType(QUrl("qrc:/Concerto/Chord.qml"),    uri, major, minor, "Chord");
+        qmlRegisterType(QUrl("qrc:/Concerto/Cadenza.qml"),  uri, major, minor, "Cadenza");
+        qmlRegisterType(QUrl("qrc:/Concerto/Reprisa.qml"),  uri, major, minor, "Reprisa");
+        qmlRegisterType(QUrl("qrc:/Concerto/Sonata.qml"),   uri, major, minor, "Sonata");
         // 3. Expose the PropertyMap as "Errors" for easy dot-notation access
         // This allows you to write: Errors.shutter_stuck.description
         engine->rootContext()->setContextProperty("Errors", ConstantRegistry::instance().map());

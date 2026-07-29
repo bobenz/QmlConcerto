@@ -30,6 +30,17 @@ void ConcertoPlugin::registerTypes(const char *uri)
 
     qmlRegisterSingletonType(QUrl(QStringLiteral("qrc:/Concerto/MelodyPolicies.qml")),
                              uri, 1, 0, "MelodyPolicies");
+
+    // QML-composition types (Sequence/Chord/...) — registered directly by URL rather than
+    // relying on qmldir-based directory resolution, which isn't reliable here either (the
+    // project's qmldir and the plugin DLL/qmldir a deployed build copies things to don't
+    // consistently land in a single "Concerto"-named directory) — same mechanism
+    // MelodyPolicies above already uses.
+    qmlRegisterType(QUrl(QStringLiteral("qrc:/Concerto/Sequence.qml")), uri, 1, 0, "Sequence");
+    qmlRegisterType(QUrl(QStringLiteral("qrc:/Concerto/Chord.qml")),    uri, 1, 0, "Chord");
+    qmlRegisterType(QUrl(QStringLiteral("qrc:/Concerto/Cadenza.qml")),  uri, 1, 0, "Cadenza");
+    qmlRegisterType(QUrl(QStringLiteral("qrc:/Concerto/Reprisa.qml")),  uri, 1, 0, "Reprisa");
+    qmlRegisterType(QUrl(QStringLiteral("qrc:/Concerto/Sonata.qml")),   uri, 1, 0, "Sonata");
 }
 
 void ConcertoPlugin::initializeEngine(QQmlEngine *engine, const char *uri)
