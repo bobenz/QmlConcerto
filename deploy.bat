@@ -5,28 +5,33 @@ setlocal EnableDelayedExpansion
 :: deploy.bat  —  Package QmlConcerto plugin for distribution
 ::
 :: Assumptions
-::   • Qt 5.15 MSVC2022 x86 DLLs are at ..\qt\bin   (sibling of this project)
-::   • Build output (Debug or Release) is passed as first argument.
-::     Defaults to Debug.
+::   • Qt 5.15 MSVC2019 x86 DLLs are at ..\qt\bin   (sibling of this project) —
+::     this is the actual redistribution target, independent of whatever Qt
+::     kit built the plugin (see the project's CLAUDE.md).
+::   • QmlConcerto.pro and ..\RegRep\RegRep.pro have already been built for the
+::     requested config — their own QMAKE_POST_LINK step deploys DLLs/qmldir
+::     into the shared %CNGO_DIR%/%CNGO_DIR%d tree automatically (see
+::     deploy.pri). This script only reads from that tree and packages it,
+::     it does not build or copy DLLs into it itself.
 ::   • Run from the QmlConcerto project root.
 ::
 :: Usage
 ::   deploy.bat [Debug|Release]
+::   (Optionally set CNGO_DIR first to override the default C:\CnGO root.)
 ::
 :: Result
 ::   deploy\
-::     Concerto\
+::     lib\
 ::       QmlConcerto.dll    <- plugin
 ::       RegRep.dll         <- runtime dependency (linked, not source-included)
-::       qmldir             <- QML module descriptor
-::     qt\                  <- Qt runtime DLLs (symlinked or copied from ..\qt)
-::       Qt5Core.dll
-::       Qt5Gui.dll
-::       Qt5Qml.dll
-::       Qt5QmlModels.dll
-::       Qt5Quick.dll
-::       Qt5Network.dll
-::       Qt5QuickControls2.dll  (optional — include if consumers use Controls)
+::     Concerto\
+::       qmldir             <- QML module descriptor ("plugin QmlConcerto ../lib")
+::       Sequence.qml, Chord.qml, Cadenza.qml, Reprisa.qml, Sonata.qml,
+::       MelodyPolicies.qml
+::     RegRep\
+::       qmldir             <- QML module descriptor ("plugin RegRep ../lib")
+::     include\             <- public headers + import libs, for C++ consumers
+::     qt\                  <- Qt runtime DLLs (copied from ..\qt)
 ::     platforms\
 ::       qwindows.dll       <- Qt platform plugin
 ::     qml\
@@ -40,60 +45,56 @@ if "%CONFIG%"=="" set CONFIG=Debug
 set SCRIPT_DIR=%~dp0
 set PROJECT_DIR=%SCRIPT_DIR:~0,-1%
 set QT_DIR=%PROJECT_DIR%\..\qt
-set BUILD_DIR=%PROJECT_DIR%\build\x86_windows_msvc2022_pe_32bit-%CONFIG%
 set DEPLOY_DIR=%PROJECT_DIR%\deploy
 
-:: Resolve build dir: Qt Creator sometimes uses slightly different names
-if not exist "%BUILD_DIR%" (
-    set BUILD_DIR=%PROJECT_DIR%\build\x86_windows_msvc2022_pe_32bit-%CONFIG%d
+set CONFIG_DIR=release
+if /I "%CONFIG%"=="Debug" set CONFIG_DIR=debug
+
+:: Same CNGO_DIR/DEPLOY_ROOT convention as deploy.pri: CNGO_DIR env var
+:: overrides the default C:\CnGO; Debug reads from the sibling root with a
+:: "d" suffix (two complete, independent trees), not a nested subdir.
+if "%CNGO_DIR%"=="" set CNGO_DIR=C:\CnGO
+set CNGO_ROOT=%CNGO_DIR%
+if /I "%CONFIG%"=="Debug" set CNGO_ROOT=%CNGO_DIR%d
+
+if not exist "%CNGO_ROOT%\lib\QmlConcerto.dll" (
+    echo [ERROR] %CNGO_ROOT%\lib\QmlConcerto.dll not found.
+    echo   Build QmlConcerto.pro ^(%CONFIG%^) first — its post-link step deploys
+    echo   here automatically, see deploy.pri.
+    exit /b 1
 )
-if not exist "%BUILD_DIR%" (
-    echo [ERROR] Build directory not found. Build the project first.
-    echo   Expected: %BUILD_DIR%
+if not exist "%CNGO_ROOT%\lib\RegRep.dll" (
+    echo [ERROR] %CNGO_ROOT%\lib\RegRep.dll not found.
+    echo   Build ..\RegRep\RegRep.pro ^(%CONFIG%^) first.
     exit /b 1
 )
 
 if not exist "%QT_DIR%\bin\Qt5Core.dll" (
     echo [ERROR] Qt DLLs not found at %QT_DIR%\bin
-    echo   Place Qt 5.15 MSVC2022 x86 alongside this project as ..\qt
-    exit /b 1
-)
-
-set PLUGIN_DLL=%BUILD_DIR%\QmlConcerto.dll
-if not exist "%PLUGIN_DLL%" (
-    echo [ERROR] Plugin DLL not found: %PLUGIN_DLL%
-    echo   Build QmlConcerto.pro first.
-    exit /b 1
-)
-
-:: RegRep.dll is a runtime dependency now (linked, not source-included — see concerto.pri)
-set REGREP_DLL=%PROJECT_DIR%\..\RegRep\lib\%CONFIG%\RegRep.dll
-if /I "%CONFIG%"=="Release" set REGREP_DLL=%PROJECT_DIR%\..\RegRep\lib\release\RegRep.dll
-if /I "%CONFIG%"=="Debug"   set REGREP_DLL=%PROJECT_DIR%\..\RegRep\lib\debug\RegRep.dll
-if not exist "%REGREP_DLL%" (
-    echo [ERROR] RegRep.dll not found: %REGREP_DLL%
-    echo   Build ..\RegRep\RegRep.pro first.
+    echo   Place Qt 5.15 MSVC2019 x86 alongside this project as ..\qt
     exit /b 1
 )
 
 echo.
 echo === QmlConcerto deploy ===
-echo   Config   : %CONFIG%
-echo   Build    : %BUILD_DIR%
-echo   Qt       : %QT_DIR%
-echo   Output   : %DEPLOY_DIR%
+echo   Config    : %CONFIG%
+echo   CNGO tree : %CNGO_ROOT%
+echo   Qt        : %QT_DIR%
+echo   Output    : %DEPLOY_DIR%
 echo.
 
-:: ── 1. Plugin files ──────────────────────────────────────────────────────────
-set CONCERTO_OUT=%DEPLOY_DIR%\Concerto
-if not exist "%CONCERTO_OUT%" mkdir "%CONCERTO_OUT%"
+:: ── 1. Plugin tree — mirror %CNGO_ROOT% exactly: lib\ + one folder per module ─
+if not exist "%DEPLOY_DIR%\lib" mkdir "%DEPLOY_DIR%\lib"
+xcopy /Y /Q "%CNGO_ROOT%\lib\*" "%DEPLOY_DIR%\lib\" >nul
+echo [OK] lib\  (QmlConcerto.dll, RegRep.dll)
 
-copy /Y "%PLUGIN_DLL%"          "%CONCERTO_OUT%\" >nul
-copy /Y "%REGREP_DLL%"          "%CONCERTO_OUT%\" >nul
-copy /Y "%PROJECT_DIR%\qmldir"  "%CONCERTO_OUT%\" >nul
-echo [OK] Concerto\QmlConcerto.dll
-echo [OK] Concerto\RegRep.dll
-echo [OK] Concerto\qmldir
+if not exist "%DEPLOY_DIR%\Concerto" mkdir "%DEPLOY_DIR%\Concerto"
+xcopy /Y /Q "%CNGO_ROOT%\Concerto\*" "%DEPLOY_DIR%\Concerto\" >nul
+echo [OK] Concerto\  (qmldir + composition .qml files)
+
+if not exist "%DEPLOY_DIR%\RegRep" mkdir "%DEPLOY_DIR%\RegRep"
+xcopy /Y /Q "%CNGO_ROOT%\RegRep\*" "%DEPLOY_DIR%\RegRep\" >nul
+echo [OK] RegRep\  (qmldir)
 
 :: ── 2. Public headers ────────────────────────────────────────────────────────
 set INCLUDE_OUT=%DEPLOY_DIR%\include
@@ -113,8 +114,10 @@ for %%H in (%REGREP_HEADERS%) do (
     echo [OK] include\%%H
 )
 
-:: Also copy the import libs so linkers can resolve DLL symbols
-set IMPORT_LIB=%BUILD_DIR%\QmlConcerto.lib
+:: Import libs (.lib) — link-time only, live in each project's own source-relative
+:: lib\debug|release\, never in the %CNGO_ROOT% runtime tree (see RegRep.pro /
+:: QmlConcerto.pro comments on DESTDIR vs deploy.pri).
+set IMPORT_LIB=%PROJECT_DIR%\lib\%CONFIG_DIR%\QmlConcerto.lib
 if exist "%IMPORT_LIB%" (
     copy /Y "%IMPORT_LIB%" "%INCLUDE_OUT%\" >nul
     echo [OK] include\QmlConcerto.lib
@@ -122,9 +125,7 @@ if exist "%IMPORT_LIB%" (
     echo [WARN] include\QmlConcerto.lib not found — build first
 )
 
-set REGREP_LIB=%REGREP_DIR%\lib\%CONFIG%\RegRep.lib
-if /I "%CONFIG%"=="Release" set REGREP_LIB=%REGREP_DIR%\lib\release\RegRep.lib
-if /I "%CONFIG%"=="Debug"   set REGREP_LIB=%REGREP_DIR%\lib\debug\RegRep.lib
+set REGREP_LIB=%REGREP_DIR%\lib\%CONFIG_DIR%\RegRep.lib
 if exist "%REGREP_LIB%" (
     copy /Y "%REGREP_LIB%" "%INCLUDE_OUT%\" >nul
     echo [OK] include\RegRep.lib
@@ -181,9 +182,11 @@ echo.
 echo === Deploy complete ===
 echo.
 echo Consumer app setup:
-echo   1. Add deploy\Concerto to your QML import path:
+echo   1. Add deploy\ to your QML import path:
 echo        engine.addImportPath("path/to/deploy");
-echo   2. Add deploy\qt to your PATH (or place DLLs alongside your exe).
+echo   2. Add deploy\qt and deploy\lib to your PATH (or place DLLs alongside
+echo      your exe) — a plugin DLL's own dependencies aren't auto-searched in
+echo      its own directory on Windows, so deploy\lib must be reachable too.
 echo   3. Place deploy\platforms\ alongside your exe.
 echo   4. C++ inheritance — in consumer.pro:
 echo        INCLUDEPATH += path/to/deploy/include

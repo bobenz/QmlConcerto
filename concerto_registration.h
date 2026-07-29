@@ -41,12 +41,11 @@ public:
         qmlRegisterSingletonType(QUrl("qrc:/Concerto/MelodyPolicies.qml"),
                                  "Concerto", 1, 0, "MelodyPolicies");
 
-        // QML-composition types (Sequence/Chord/...) — registered directly by URL rather
-        // than relying on qmldir-based directory resolution, which never actually worked
-        // for source-included consumers (addImportPath("qrc:/Concerto") + addImportPath
-        // (CONCERTO_HOME) both point one directory level off from where a "Concerto"-named
-        // qmldir would need to sit, so `import Concerto 1.0` could never resolve these
-        // through it — this is the same mechanism MelodyPolicies above already uses).
+        // QML-composition types (Sequence/Chord/...) — registered directly by URL. Source
+        // inclusion has no separate plugin to load, so the qmldir+`plugin` mechanism (used by
+        // ConcertoPlugin.cpp for the real loaded-plugin path) doesn't apply here at all — this
+        // is the only mechanism available for a source-included consumer to expose a QML-file
+        // type under the "Concerto" URI, same as MelodyPolicies above.
         qmlRegisterType(QUrl("qrc:/Concerto/Sequence.qml"), uri, major, minor, "Sequence");
         qmlRegisterType(QUrl("qrc:/Concerto/Chord.qml"),    uri, major, minor, "Chord");
         qmlRegisterType(QUrl("qrc:/Concerto/Cadenza.qml"),  uri, major, minor, "Cadenza");

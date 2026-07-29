@@ -1,5 +1,5 @@
 module Concerto
-plugin QmlConcerto
+plugin QmlConcerto ../lib
 
 # QML composition components
 Sequence          1.0 Sequence.qml

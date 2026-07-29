@@ -28,19 +28,12 @@ void ConcertoPlugin::registerTypes(const char *uri)
 
     qmlRegisterSingletonType<Partitura>(uri, 1, 0, "Partitura", partitura_provider);
 
-    qmlRegisterSingletonType(QUrl(QStringLiteral("qrc:/Concerto/MelodyPolicies.qml")),
-                             uri, 1, 0, "MelodyPolicies");
-
-    // QML-composition types (Sequence/Chord/...) — registered directly by URL rather than
-    // relying on qmldir-based directory resolution, which isn't reliable here either (the
-    // project's qmldir and the plugin DLL/qmldir a deployed build copies things to don't
-    // consistently land in a single "Concerto"-named directory) — same mechanism
-    // MelodyPolicies above already uses.
-    qmlRegisterType(QUrl(QStringLiteral("qrc:/Concerto/Sequence.qml")), uri, 1, 0, "Sequence");
-    qmlRegisterType(QUrl(QStringLiteral("qrc:/Concerto/Chord.qml")),    uri, 1, 0, "Chord");
-    qmlRegisterType(QUrl(QStringLiteral("qrc:/Concerto/Cadenza.qml")),  uri, 1, 0, "Cadenza");
-    qmlRegisterType(QUrl(QStringLiteral("qrc:/Concerto/Reprisa.qml")),  uri, 1, 0, "Reprisa");
-    qmlRegisterType(QUrl(QStringLiteral("qrc:/Concerto/Sonata.qml")),   uri, 1, 0, "Sonata");
+    // QML-composition types (Sequence/Chord/Cadenza/Reprisa/Sonata/MelodyPolicies) are NOT
+    // registered here — qmldir is the single source of truth for them. When this plugin is
+    // loaded via `import Concerto 1.0`, Qt already found this DLL through a real on-disk
+    // qmldir (see the project-root qmldir and the deploy tree it gets copied into), and that
+    // same qmldir's own type-mapping lines resolve those six types relative to its own
+    // directory — nothing extra needed here.
 }
 
 void ConcertoPlugin::initializeEngine(QQmlEngine *engine, const char *uri)

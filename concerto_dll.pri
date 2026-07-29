@@ -17,5 +17,5 @@ win32:CONFIG(debug, debug|release) {
 # directly don't need to know RegRep exists as a separate step.
 include($$PWD/../RegRep/regrep_dll.pri)
 
-# ── Deploy root — change once here, propagates to all plugin DESTDIRs ────────
-CNGO_DIR = C:/CnGO
+# ── Deploy root — see deploy.pri for CNGO_DIR/DEPLOY_ROOT/DEPLOY_LIB_DIR ──────
+include($$PWD/deploy.pri)
