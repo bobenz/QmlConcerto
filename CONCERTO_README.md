@@ -21,7 +21,8 @@ QmlConcerto models multi-step operations as musical phrases that can be played, 
 ```
 
 `ErrorEntry`/`ErrorRegistry` and the error-reporting pipeline are no longer implemented locally — they come
-from [RegRep](../RegRep), a sibling project, source-included via `concerto.pri`. The QML-facing names
+from [RegRep](../RegRep), a sibling project, linked as a shared library via `concerto.pri` (build
+`RegRep.pro` first; `RegRep.dll` travels alongside `QmlConcerto.dll` automatically). The QML-facing names
 (`Errors`, `ErrorRegistry`) are unchanged, and `errorsregistry.h` still exists as a thin compat shim
 (`using ErrorEntry = ConstantEntry; using ErrorRegistry = ConstantRegistry;`) — existing C++ code such as
 service-specific `xfserrors_*.h` files that `#include "errorsregistry.h"` and declare
@@ -216,8 +217,9 @@ QmlConcerto/
 └── .gitignore
 ```
 
-`concerto.pri` also pulls in `../RegRep/regrep.pri` (sibling project) for `ConstantEntry`/`ConstantRegistry`
-and the reporting pipeline — see [RegRep's CLAUDE.md](../RegRep/CLAUDE.md).
+`concerto.pri` also pulls in `../RegRep/regrep_dll.pri` (sibling project, linked as a shared library, not
+source-included) for `ConstantEntry`/`ConstantRegistry` and the reporting pipeline — see
+[RegRep's CLAUDE.md](../RegRep/CLAUDE.md). Build `RegRep.pro` before building anything here.
 
 ## Adding a Custom Phrase
 

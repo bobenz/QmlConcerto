@@ -74,7 +74,8 @@ workflow — however deeply nested — exposes a uniform lifecycle interface.
 ```
 
 `ErrorEntry`/`ErrorRegistry` and the reporting pipeline are implemented by
-[RegRep](../RegRep), a sibling project, source-included via `concerto.pri`. The QML-facing names (`Errors`,
+[RegRep](../RegRep), a sibling project, linked as a shared library via `concerto.pri` (build `RegRep.pro`
+first — `RegRep.dll` travels alongside `QmlConcerto.dll` automatically). The QML-facing names (`Errors`,
 `ErrorRegistry`) are unchanged from earlier versions of this manual — only the underlying C++ types moved.
 `errorsregistry.h` still exists as a compat shim (`using ErrorEntry = ConstantEntry; using ErrorRegistry =
 ConstantRegistry;`) so existing C++ headers that declare `static ErrorEntry foo{...}` (e.g. service-specific
